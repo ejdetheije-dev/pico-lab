@@ -15,6 +15,7 @@ combineren, ten slotte sensor + actuator als regelkring.
 
 Hardware (Pico 2W + Freenove kit) is nog niet in huis. Zodra het pakket
 binnen is gaan we 01 bouwen, opstarten en valideren — dan pas door naar 02.
+Stappenplan voor die bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
 
 ## Volgorde-advies
 
