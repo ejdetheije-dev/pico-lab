@@ -5,17 +5,22 @@ combineren, ten slotte sensor + actuator als regelkring.
 
 ## Status (2026-05-28)
 
-| Experiment             | Code | Bedraad | Getest |
-|------------------------|------|---------|--------|
-| 01 weerstation         | ja   | nee     | nee    |
-| 02 reactiemeting       | ja   | nee     | nee    |
-| 03 sonar               | ja   | nee     | nee    |
-| 04 servo-wijzer        | ja   | nee     | nee    |
-| 05 solar tracker       | ja   | nee     | nee    |
+| Experiment             | Code | Bedraad | Getest | Jira Epic |
+|------------------------|------|---------|--------|-----------|
+| 01 weerstation         | ja   | nee     | nee    | PICO-2    |
+| 02 reactiemeting       | ja   | nee     | nee    | PICO-3    |
+| 03 sonar               | ja   | nee     | nee    | PICO-4    |
+| 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
+| 05 solar tracker       | ja   | nee     | nee    | PICO-6    |
 
 Hardware (Pico 2W + Freenove kit) is nog niet in huis. Zodra het pakket
 binnen is gaan we 01 bouwen, opstarten en valideren — dan pas door naar 02.
 Stappenplan voor die bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
+
+Issue tracker: Jira project **`PICO`** op
+[ejdetheije.atlassian.net](https://ejdetheije.atlassian.net/browse/PICO-1).
+6 Epics + 18 starter-Taken staan klaar. Bring-up start bij PICO-7
+(Pico aansluiten en COM-poort detecteren).
 
 ## Volgorde-advies
 

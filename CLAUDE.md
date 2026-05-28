@@ -14,12 +14,18 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 Stand per 2026-05-28:
 
-- Repo opgezet, eerste commit gepusht naar `origin/main`
+- Repo opgezet, gepusht naar `origin/main`
   (`github.com/ejdetheije-dev/pico-lab`, privé).
 - Alle vijf de experimenten staan als code klaar; geen enkele is nog op
   echte hardware getest.
 - Hardware (Pico 2W + Freenove Ultimate Starter Kit) is nog niet binnen.
   User geeft een seintje zodra het pakket er is.
+- Bring-up stappenplan staat in `bring_up_plan.md` — depth-first: eerst
+  experiment 01 volledig werkend, dan pas door naar 02.
+- Issue tracker: Jira project **`PICO`** op
+  `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
+  starter-Taken (PICO-7 t/m PICO-24) staan klaar. Bring-up start bij PICO-7
+  (COM-poort detecteren).
 - Volgende fase: bring-up support — stap voor stap aansluiten, voeding
   controleren, signaal verifiëren, dan pas code draaien.
 
