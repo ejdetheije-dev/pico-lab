@@ -3,6 +3,19 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
+## Status (2026-05-28)
+
+| Experiment             | Code | Bedraad | Getest |
+|------------------------|------|---------|--------|
+| 01 weerstation         | ja   | nee     | nee    |
+| 02 reactiemeting       | ja   | nee     | nee    |
+| 03 sonar               | ja   | nee     | nee    |
+| 04 servo-wijzer        | ja   | nee     | nee    |
+| 05 solar tracker       | ja   | nee     | nee    |
+
+Hardware (Pico 2W + Freenove kit) is nog niet in huis. Zodra het pakket
+binnen is gaan we 01 bouwen, opstarten en valideren — dan pas door naar 02.
+
 ## Volgorde-advies
 
 1. `01_weerstation` — leer DHT11 uitlezen en LCD aansturen

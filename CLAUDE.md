@@ -10,6 +10,19 @@ op de Pico, en wordt vanaf een Windows-laptop geupload via `mpremote`.
 Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 één wetenschappelijke vraag, één `main.py` die werkt zodra je hem upload.
 
+## Huidige status
+
+Stand per 2026-05-28:
+
+- Repo opgezet, eerste commit gepusht naar `origin/main`
+  (`github.com/ejdetheije-dev/pico-lab`, privé).
+- Alle vijf de experimenten staan als code klaar; geen enkele is nog op
+  echte hardware getest.
+- Hardware (Pico 2W + Freenove Ultimate Starter Kit) is nog niet binnen.
+  User geeft een seintje zodra het pakket er is.
+- Volgende fase: bring-up support — stap voor stap aansluiten, voeding
+  controleren, signaal verifiëren, dan pas code draaien.
+
 ## Hardware inventaris
 
 ### Board
