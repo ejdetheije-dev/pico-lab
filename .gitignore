@@ -1,4 +1,4 @@
 config.py
-data/*.csv
+**/data/*.csv
 __pycache__/
 *.pyc

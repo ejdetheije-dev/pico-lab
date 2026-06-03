@@ -19,14 +19,22 @@ Stand per 2026-06-03:
 - **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
   (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
   valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
-- **PICO-10 in uitvoering** (Fase 1 van `bring_up_plan.md`):
-  - §1.1 voeding bewezen — geen multimeter beschikbaar, dus gevalideerd
-    met een LED + 1kΩ tussen rode en blauwe rail (LED brandde na correcte
-    polariteit). 3V3-rail staat ✓.
-  - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv) met interne
-    pull-up. Sensor is **kaal** (geen module met PCB) — `Pin.IN, Pin.PULL_UP`
-    expliciet meegeven, want er is geen on-board pull-up. ✓.
-  - §1.3 LCD 1602 standalone is de volgende stap.
+- **PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, experiment 01 volledig werkend):
+  - §1.1 voeding bewezen met LED + 1kΩ (geen multimeter beschikbaar).
+  - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv). Sensor is
+    **kaal** (geen PCB-module) — `Pin.IN, Pin.PULL_UP` expliciet meegeven.
+  - §1.3 LCD 1602 op I2C0 (SDA=0, SCL=1, VCC=Vbus), adres `0x27`. Pinout
+    valkuil: de `GND/VCC/SDA/SCL`-silkscreen labels staan op de **voorkant**
+    van het PCB-tje, niet op de achterkant — zie git geschiedenis voor de
+    debug-sessie.
+  - §1.4 combinatie + CSV-log: `experiments/01_weerstation/main.py` draait
+    end-to-end. LCD toont temp+vocht, console logt per 5 s, CSV op
+    `:data/weerstation.csv` (Pico-flash). Voorbeeld-output: zie
+    `experiments/01_weerstation/data/weerstation.csv` (gitignored).
+- **Fixes uit deze run:**
+  - `shared/logger.py` maakt nu zelf de parent-directory aan als die ontbreekt.
+  - `experiments/01_weerstation/main.py` initialiseert de DHT11-pin met
+    `Pin.IN, Pin.PULL_UP` voor de kale sensor.
 - Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: tot dusver
   alleen 1kΩ gevonden — voldoende voor go/no-go LED-test, maar voor latere
   experimenten loont het de moeite om de 220Ω / 10kΩ in de kit op te zoeken.
@@ -39,8 +47,8 @@ Stand per 2026-06-03:
   PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
 - Issue tracker: Jira project **`PICO`** op
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
-  starter-Taken (PICO-7 t/m PICO-24). Actief ticket: PICO-10 (DHT11 + LCD
-  op breadboard).
+  starter-Taken (PICO-7 t/m PICO-24). Volgend ticket: PICO-11
+  (experiment 02 reactiemeting).
 
 ## Hardware inventaris
 

@@ -20,9 +20,17 @@ class CsvLogger:
         self.path = path
         self.max_bytes = max_bytes
         self._counter = 0
+        self._ensure_dir(path)
         if not self._exists(path):
             with open(path, "w") as f:
                 f.write(",".join(header) + "\n")
+
+    def _ensure_dir(self, path):
+        if "/" not in path:
+            return
+        directory = path.rsplit("/", 1)[0]
+        if not self._exists(directory):
+            os.mkdir(directory)
 
     def _exists(self, path):
         try:

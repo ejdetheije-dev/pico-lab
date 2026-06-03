@@ -17,7 +17,7 @@ INTERVAL_S = 5
 
 
 def main():
-    sensor = dht.DHT11(Pin(DHT_PIN))
+    sensor = dht.DHT11(Pin(DHT_PIN, Pin.IN, Pin.PULL_UP))
     lcd = Lcd1602(sda=0, scl=1)
     logger = CsvLogger(
         "data/weerstation.csv",
