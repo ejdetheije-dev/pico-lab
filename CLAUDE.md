@@ -19,7 +19,7 @@ Stand per 2026-06-03:
 - **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
   (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
   valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
-- **PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, experiment 01 volledig werkend):
+- **PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, experiment 01 volledig werkend, staat in Jira op Gereed):
   - §1.1 voeding bewezen met LED + 1kΩ (geen multimeter beschikbaar).
   - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv). Sensor is
     **kaal** (geen PCB-module) — `Pin.IN, Pin.PULL_UP` expliciet meegeven.

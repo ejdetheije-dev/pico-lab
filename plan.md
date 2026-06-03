@@ -18,7 +18,7 @@ Pico 2W is live op **COM8** met MicroPython v1.28.0. Fase 0 van de bring-up
 PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
 `experiments/00_smoketest/`.
 
-**PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`):
+**PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, Jira-status Gereed):
 
 - §1.1 voeding bewezen via LED + 1kΩ (geen multimeter beschikbaar).
 - §1.2 DHT11 standalone op GPIO 16, kale sensor met `Pin.IN, Pin.PULL_UP`.
