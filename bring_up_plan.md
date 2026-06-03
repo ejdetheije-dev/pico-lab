@@ -98,8 +98,8 @@ Geschatte tijd: 60–90 min.
 - Beide componenten samen op breadboard, gemeenschappelijke GND
 - Upload en draai:
 
-  ```bash
-  bash tools/upload.sh experiments/01_weerstation
+  ```powershell
+  .\tools\upload.ps1 experiments\01_weerstation
   mpremote
   ```
 

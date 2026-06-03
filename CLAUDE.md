@@ -12,22 +12,25 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-05-28:
+Stand per 2026-06-03:
 
-- Repo opgezet, gepusht naar `origin/main`
-  (`github.com/ejdetheije-dev/pico-lab`, privé).
-- Alle vijf de experimenten staan als code klaar; geen enkele is nog op
-  echte hardware getest.
-- Hardware (Pico 2W + Freenove Ultimate Starter Kit) is nog niet binnen.
-  User geeft een seintje zodra het pakket er is.
-- Bring-up stappenplan staat in `bring_up_plan.md` — depth-first: eerst
-  experiment 01 volledig werkend, dan pas door naar 02.
+- Pico 2W is live op **COM8** met MicroPython v1.28.0 (RPI_PICO2_W),
+  gemonteerd op breadboard, USB-C aangesloten op de Windows-laptop.
+- **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
+  (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
+  valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
+- Freenove Ultimate Starter Kit is binnen. Voor experiment 01 (weerstation)
+  ontbreken nog 2 sensoren — vraag user welke voordat je breadboard-stappen
+  voorstelt.
+- Het bash `tools/upload.sh` is vervangen door **`tools/upload.ps1`**: de
+  Windows-bash hier is WSL en heeft geen `mpremote` of directe COM-toegang.
+  PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
 - Issue tracker: Jira project **`PICO`** op
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
-  starter-Taken (PICO-7 t/m PICO-24) staan klaar. Bring-up start bij PICO-7
-  (COM-poort detecteren).
-- Volgende fase: bring-up support — stap voor stap aansluiten, voeding
-  controleren, signaal verifiëren, dan pas code draaien.
+  starter-Taken (PICO-7 t/m PICO-24). Volgende ticket: PICO-10 (DHT11 + LCD
+  op breadboard) — geblokkeerd tot ontbrekende sensoren binnen zijn.
+- Volgende fase: experiment 01 bouwen — depth-first per `bring_up_plan.md`
+  (eerst voeding, dan DHT11 standalone, dan LCD, dan combinatie + CSV-log).
 
 ## Hardware inventaris
 
@@ -96,7 +99,7 @@ experiment vrij zijn — vermeld dit altijd in het bedradingsschema.
 Installatie:
 
 ```powershell
-pip install mpremote
+uv tool install mpremote
 ```
 
 COM-poort detecteren:
@@ -114,7 +117,7 @@ mpremote cp experiments/01_weerstation/main.py :main.py
 Compleet experiment uploaden (via helperscript):
 
 ```powershell
-bash tools/upload.sh experiments/01_weerstation
+.\tools\upload.ps1 experiments\01_weerstation
 ```
 
 Live REPL en output bekijken:

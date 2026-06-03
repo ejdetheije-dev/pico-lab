@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-05-28)
+## Status (2026-06-03)
 
 | Experiment             | Code | Bedraad | Getest | Jira Epic |
 |------------------------|------|---------|--------|-----------|
@@ -13,14 +13,17 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
 | 05 solar tracker       | ja   | nee     | nee    | PICO-6    |
 
-Hardware (Pico 2W + Freenove kit) is nog niet in huis. Zodra het pakket
-binnen is gaan we 01 bouwen, opstarten en valideren — dan pas door naar 02.
-Stappenplan voor die bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
+Pico 2W is live op **COM8** met MicroPython v1.28.0. Fase 0 van de bring-up
+(PICO-7, PICO-8, PICO-9) is afgerond — upload-workflow gemigreerd naar
+PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
+`experiments/00_smoketest/`. Freenove kit is binnen; 2 sensoren voor het
+weerstation zijn nog onderweg, daardoor staat PICO-10 (eerste
+experiment-bouw) on hold. Stappenplan voor de bring-up: zie
+[`bring_up_plan.md`](bring_up_plan.md).
 
 Issue tracker: Jira project **`PICO`** op
 [ejdetheije.atlassian.net](https://ejdetheije.atlassian.net/browse/PICO-1).
-6 Epics + 18 starter-Taken staan klaar. Bring-up start bij PICO-7
-(Pico aansluiten en COM-poort detecteren).
+6 Epics + 18 starter-Taken. Volgende ticket: PICO-10.
 
 ## Volgorde-advies
 

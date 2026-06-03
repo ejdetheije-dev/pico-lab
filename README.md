@@ -8,15 +8,14 @@ Starter Kit.
 
 - Raspberry Pi Pico 2W met MicroPython firmware
 - Freenove Ultimate Starter Kit (sensoren, breadboard, jumper wires)
-- Windows-laptop met Python 3 en `mpremote`
-- Bash (Git Bash of WSL) om het uploadscript te draaien
+- Windows-laptop met Python 3, `uv` en `mpremote`
 
 ## Snelstart
 
 1. Installeer `mpremote`:
 
    ```powershell
-   pip install mpremote
+   uv tool install mpremote
    ```
 
 2. Sluit de Pico 2W aan via USB. Controleer de COM-poort:
@@ -27,8 +26,8 @@ Starter Kit.
 
 3. Upload een experiment:
 
-   ```bash
-   bash tools/upload.sh experiments/01_weerstation
+   ```powershell
+   .\tools\upload.ps1 experiments\01_weerstation
    ```
 
 4. Open de REPL om output te zien:
