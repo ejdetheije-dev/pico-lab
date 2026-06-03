@@ -19,16 +19,20 @@ Stand per 2026-06-03:
 - **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
   (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
   valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
-- Freenove Ultimate Starter Kit is binnen. Voor experiment 01 (weerstation)
-  ontbreken nog 2 sensoren — vraag user welke voordat je breadboard-stappen
-  voorstelt.
+- Freenove Ultimate Starter Kit is binnen, inclusief DHT11 en LCD 1602 die
+  experiment 01 nodig heeft. **PICO-10 is niet geblokkeerd** — Fase 1 van
+  `bring_up_plan.md` kan starten zodra user gereed is.
+- GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25** als losse
+  toevoegingen voor een latere variant van het weerstation. Geen blokker
+  voor het huidige experiment 01; wat ermee gebeurt wordt na 25 juni
+  beslist.
 - Het bash `tools/upload.sh` is vervangen door **`tools/upload.ps1`**: de
   Windows-bash hier is WSL en heeft geen `mpremote` of directe COM-toegang.
   PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
 - Issue tracker: Jira project **`PICO`** op
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
   starter-Taken (PICO-7 t/m PICO-24). Volgende ticket: PICO-10 (DHT11 + LCD
-  op breadboard) — geblokkeerd tot ontbrekende sensoren binnen zijn.
+  op breadboard).
 - Volgende fase: experiment 01 bouwen — depth-first per `bring_up_plan.md`
   (eerst voeding, dan DHT11 standalone, dan LCD, dan combinatie + CSV-log).
 

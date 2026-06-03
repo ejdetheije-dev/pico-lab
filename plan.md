@@ -16,10 +16,11 @@ combineren, ten slotte sensor + actuator als regelkring.
 Pico 2W is live op **COM8** met MicroPython v1.28.0. Fase 0 van de bring-up
 (PICO-7, PICO-8, PICO-9) is afgerond — upload-workflow gemigreerd naar
 PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
-`experiments/00_smoketest/`. Freenove kit is binnen; 2 sensoren voor het
-weerstation zijn nog onderweg, daardoor staat PICO-10 (eerste
-experiment-bouw) on hold. Stappenplan voor de bring-up: zie
-[`bring_up_plan.md`](bring_up_plan.md).
+`experiments/00_smoketest/`. Freenove kit is binnen, inclusief DHT11 en
+LCD 1602: PICO-10 (eerste experiment-bouw) is klaar om te starten.
+GY-BME280 + GY-BMP280 worden op 2026-06-25 geleverd als losse toevoegingen
+voor een latere variant; geen blokker voor experiment 01. Stappenplan voor
+de bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
 
 Issue tracker: Jira project **`PICO`** op
 [ejdetheije.atlassian.net](https://ejdetheije.atlassian.net/browse/PICO-1).
