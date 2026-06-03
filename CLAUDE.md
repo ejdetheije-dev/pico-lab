@@ -19,9 +19,17 @@ Stand per 2026-06-03:
 - **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
   (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
   valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
-- Freenove Ultimate Starter Kit is binnen, inclusief DHT11 en LCD 1602 die
-  experiment 01 nodig heeft. **PICO-10 is niet geblokkeerd** — Fase 1 van
-  `bring_up_plan.md` kan starten zodra user gereed is.
+- **PICO-10 in uitvoering** (Fase 1 van `bring_up_plan.md`):
+  - §1.1 voeding bewezen — geen multimeter beschikbaar, dus gevalideerd
+    met een LED + 1kΩ tussen rode en blauwe rail (LED brandde na correcte
+    polariteit). 3V3-rail staat ✓.
+  - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv) met interne
+    pull-up. Sensor is **kaal** (geen module met PCB) — `Pin.IN, Pin.PULL_UP`
+    expliciet meegeven, want er is geen on-board pull-up. ✓.
+  - §1.3 LCD 1602 standalone is de volgende stap.
+- Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: tot dusver
+  alleen 1kΩ gevonden — voldoende voor go/no-go LED-test, maar voor latere
+  experimenten loont het de moeite om de 220Ω / 10kΩ in de kit op te zoeken.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25** als losse
   toevoegingen voor een latere variant van het weerstation. Geen blokker
   voor het huidige experiment 01; wat ermee gebeurt wordt na 25 juni
@@ -31,10 +39,8 @@ Stand per 2026-06-03:
   PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
 - Issue tracker: Jira project **`PICO`** op
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
-  starter-Taken (PICO-7 t/m PICO-24). Volgende ticket: PICO-10 (DHT11 + LCD
+  starter-Taken (PICO-7 t/m PICO-24). Actief ticket: PICO-10 (DHT11 + LCD
   op breadboard).
-- Volgende fase: experiment 01 bouwen — depth-first per `bring_up_plan.md`
-  (eerst voeding, dan DHT11 standalone, dan LCD, dan combinatie + CSV-log).
 
 ## Hardware inventaris
 

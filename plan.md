@@ -7,7 +7,7 @@ combineren, ten slotte sensor + actuator als regelkring.
 
 | Experiment             | Code | Bedraad | Getest | Jira Epic |
 |------------------------|------|---------|--------|-----------|
-| 01 weerstation         | ja   | nee     | nee    | PICO-2    |
+| 01 weerstation         | ja   | deels   | deels  | PICO-2    |
 | 02 reactiemeting       | ja   | nee     | nee    | PICO-3    |
 | 03 sonar               | ja   | nee     | nee    | PICO-4    |
 | 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
@@ -16,15 +16,24 @@ combineren, ten slotte sensor + actuator als regelkring.
 Pico 2W is live op **COM8** met MicroPython v1.28.0. Fase 0 van de bring-up
 (PICO-7, PICO-8, PICO-9) is afgerond — upload-workflow gemigreerd naar
 PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
-`experiments/00_smoketest/`. Freenove kit is binnen, inclusief DHT11 en
-LCD 1602: PICO-10 (eerste experiment-bouw) is klaar om te starten.
+`experiments/00_smoketest/`.
+
+**PICO-10 in uitvoering** (Fase 1 van `bring_up_plan.md`):
+
+- §1.1 voeding bewezen via LED + 1kΩ tussen rode/blauwe rail (geen
+  multimeter beschikbaar — LED-test is go/no-go op de 3V3-rail).
+- §1.2 DHT11 standalone op GPIO 16 leest in REPL `23 52` (°C / % rv).
+  Kale DHT11 zonder PCB-module; `Pin.IN, Pin.PULL_UP` expliciet meegeven.
+- §1.3 LCD 1602 standalone via I2C0 (SDA=0, SCL=1, VCC=Vbus) — open.
+- §1.4 combinatie + CSV-log — open.
+
 GY-BME280 + GY-BMP280 worden op 2026-06-25 geleverd als losse toevoegingen
 voor een latere variant; geen blokker voor experiment 01. Stappenplan voor
 de bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
 
 Issue tracker: Jira project **`PICO`** op
 [ejdetheije.atlassian.net](https://ejdetheije.atlassian.net/browse/PICO-1).
-6 Epics + 18 starter-Taken. Volgende ticket: PICO-10.
+6 Epics + 18 starter-Taken. Actief ticket: PICO-10.
 
 ## Volgorde-advies
 
