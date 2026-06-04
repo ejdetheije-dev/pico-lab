@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-03:
+Stand per 2026-06-04:
 
 - Pico 2W is live op **COM8** met MicroPython v1.28.0 (RPI_PICO2_W),
   gemonteerd op breadboard, USB-C aangesloten op de Windows-laptop.
@@ -50,6 +50,17 @@ Stand per 2026-06-03:
   starter-Taken (PICO-7 t/m PICO-24). Volgend ticket: PICO-11
   (experiment 02 reactiemeting).
 
+### LDR toegevoegd aan experiment 01 — diagnose loopt (2026-06-04)
+
+- `shared/ldr.py` aangemaakt, `main.py` en `README.md` bijgewerkt.
+- LDR fysiek aangesloten: `3V3 → LDR → 26 → 1kΩ → GND`.
+- Experiment draait end-to-end: temp, vocht én licht worden gelogd.
+- **Openstaand probleem:** lichtwaarde reageert nauwelijks op telefoonlamp
+  (steeds 16–17%). Vermoeden: 1kΩ pull-down te klein, bereik te smal.
+- **Volgende stap:** extremen testen (LDR volledig afdekken vs. lamp direct
+  erop) om te bepalen of de LDR werkt maar het bereik klein is, of dat er
+  een bedradingsprobleem is. Daarna eventueel grotere weerstand zoeken.
+
 ## Hardware inventaris
 
 ### Board
@@ -57,6 +68,20 @@ Stand per 2026-06-03:
 - Raspberry Pi Pico 2W (chip RP2350, WiFi 802.11n, BLE 5.2, 26 GPIO)
 - Verbinding met laptop: USB, verschijnt als COM-poort op Windows
 - Upload: `mpremote`
+
+### Sticker op het breadboard (ALTIJD gebruiken bij bedrading)
+
+Op het breadboard zit een sticker met de pinlabels van de Pico. Gebruik
+**altijd deze labels** — nooit fysieke pinnummers (1–40).
+
+Rechterkant (van USB-connector naar beneden):
+`Vbus`, `3V3`, `GND`, `EN`, `Vref`, `26`, `RUN`, `22`, `21`, `20`, `19`, `18`, `17`, `16`
+
+Linkerkant (van USB-connector naar beneden):
+`0`, `1`, `2`, `3`, `4`, `5`, `6`, `7`, `8`, `9`, `10`, `11`, `12`, `13`, `14`, `15`
+
+GND-pinnen zitten op beide kanten verspreid — de blauwe rail op het breadboard
+is de GND-rail.
 
 ### Sensoren (Freenove kit)
 
