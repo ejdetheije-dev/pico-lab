@@ -104,6 +104,14 @@ reactiemeting).
 - **Wetenschappelijke vraag:** Hoe snel kan de servo het lichtste punt volgen,
   en wat is de minimale lichtverschil-drempel waarop hij betrouwbaar reageert?
 
+## Openstaande verbeteringen (later oppakken)
+
+- **Automatische CSV-sync:** `mpremote mount` koppelt een lokale map als
+  filesystem aan de Pico zodat data direct op de laptop schrijft. Vereist
+  analyse van padconflict: `data/weerstation.csv` (Pico-upload) vs.
+  `experiments/01_weerstation/data/weerstation.csv` (mount vanuit projectroot).
+  Mogelijk oplossing: `tools/run_live.ps1` + pad als constante in `main.py`.
+
 ## Toekomstige experimenten
 
 Ideeën die voortbouwen op de aanwezige hardware:
