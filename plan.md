@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-03)
+## Status (2026-06-04)
 
 | Experiment             | Code | Bedraad | Getest | Jira Epic |
 |------------------------|------|---------|--------|-----------|
@@ -26,10 +26,15 @@ PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
   de backpack-PCB.
 - §1.4 combinatie + CSV-log werkt: `main.py` draait, LCD toont temp+vocht,
   CSV op de flash, op te halen met `mpremote cp :data/weerstation.csv .`.
+- §1.5 LDR op GPIO 26 (ADC0), bedrading `3V3 → LDR → GPIO 26 → 1kΩ → GND`,
+  software remapping (`min_raw=5600`, `max_raw=25000`), bereik 19–75%.
 
-Fixes onderweg:
-- `shared/logger.py` maakt parent-directory aan als die ontbreekt.
-- `experiments/01_weerstation/main.py` met expliciete pull-up op DHT11.
+**Valkuilen die bewezen zijn (zie ook CLAUDE.md):**
+- Breadboard middengroef: jumper en Pico-pin altijd aan dezelfde kant.
+- RP2350 ADC offset: ~3000 raw bij GND is normaal.
+- 10kΩ verzadigt bij fel licht; 1kΩ + remapping werkt beter.
+
+Weerstanden in kit: 1kΩ, 10kΩ en 220Ω bevestigd aanwezig.
 
 GY-BME280 + GY-BMP280 worden op 2026-06-25 geleverd als losse toevoegingen
 voor een latere variant; geen blokker voor experiment 01. Stappenplan voor

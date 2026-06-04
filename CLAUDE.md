@@ -35,9 +35,8 @@ Stand per 2026-06-04:
   - `shared/logger.py` maakt nu zelf de parent-directory aan als die ontbreekt.
   - `experiments/01_weerstation/main.py` initialiseert de DHT11-pin met
     `Pin.IN, Pin.PULL_UP` voor de kale sensor.
-- Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: tot dusver
-  alleen 1kΩ gevonden — voldoende voor go/no-go LED-test, maar voor latere
-  experimenten loont het de moeite om de 220Ω / 10kΩ in de kit op te zoeken.
+- Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: 1kΩ, 10kΩ
+  en 220Ω zijn bevestigd aanwezig in de kit.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25** als losse
   toevoegingen voor een latere variant van het weerstation. Geen blokker
   voor het huidige experiment 01; wat ermee gebeurt wordt na 25 juni
@@ -50,16 +49,25 @@ Stand per 2026-06-04:
   starter-Taken (PICO-7 t/m PICO-24). Volgend ticket: PICO-11
   (experiment 02 reactiemeting).
 
-### LDR toegevoegd aan experiment 01 — diagnose loopt (2026-06-04)
+### LDR — afgerond (2026-06-04)
 
-- `shared/ldr.py` aangemaakt, `main.py` en `README.md` bijgewerkt.
-- LDR fysiek aangesloten: `3V3 → LDR → 26 → 1kΩ → GND`.
-- Experiment draait end-to-end: temp, vocht én licht worden gelogd.
-- **Openstaand probleem:** lichtwaarde reageert nauwelijks op telefoonlamp
-  (steeds 16–17%). Vermoeden: 1kΩ pull-down te klein, bereik te smal.
-- **Volgende stap:** extremen testen (LDR volledig afdekken vs. lamp direct
-  erop) om te bepalen of de LDR werkt maar het bereik klein is, of dat er
-  een bedradingsprobleem is. Daarna eventueel grotere weerstand zoeken.
+- Bedrading: `3V3 → LDR → GPIO 26 → 1kΩ → GND`.
+- Gemeten bereik na kalibratie: vinger=19%, schaduw=55%, lamp=75%.
+- `shared/ldr.py` gebruikt software remapping: `min_raw=5600`, `max_raw=25000`.
+  Stel bij als de sensor verplaatst wordt of de omgeving sterk verandert.
+
+**Valkuilen LDR (bewezen uit debug-sessie):**
+- **Breadboard middengroef:** jumper draad en Pico-pin ALTIJD aan dezelfde
+  kant van de middengroef. Links en rechts zijn elektrisch gescheiden — ook
+  al staan ze in dezelfde genummerde rij. Dit was de hoofdoorzaak van de
+  vaste 17%-waarde.
+- **Weerstandkeuze:** 10kΩ verzadigt bij fel licht (92–96%, onbruikbaar).
+  1kΩ geeft een bruikbare spreiding in combinatie met software remapping.
+- **RP2350 ADC offset:** GPIO 26 leest ~3000 raw (~5%) bij directe GND-
+  verbinding. Dit is normaal gedrag van de RP2350 — geen fout.
+
+**Kit-inventaris bijgewerkt:** 10kΩ weerstanden zitten ook in de Freenove kit
+(naast de eerder gevonden 1kΩ en 220Ω).
 
 ## Hardware inventaris
 
