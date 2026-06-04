@@ -36,9 +36,16 @@ PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
 
 Weerstanden in kit: 1kΩ, 10kΩ en 220Ω bevestigd aanwezig.
 
-GY-BME280 + GY-BMP280 worden op 2026-06-25 geleverd als losse toevoegingen
-voor een latere variant; geen blokker voor experiment 01. Stappenplan voor
-de bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
+**Gepland na 2026-06-25 — drukmeting toevoegen aan experiment 01:**
+
+GY-BME280 en GY-BMP280 worden op 2026-06-25 geleverd. Na ontvangst:
+- Sensor aansluiten op I2C0 (SDA=GPIO 0, SCL=GPIO 1), zelfde bus als LCD.
+- BME280 → vervangt DHT11 (temp + vocht + druk). BMP280 → DHT11 blijft
+  voor vochtigheid, BMP280 voegt druk toe. Keuze afhankelijk van wat werkt.
+- Nieuwe module `shared/bme280.py` schrijven.
+- `main.py` en CSV uitbreiden met `druk_hpa`.
+
+Stappenplan voor de bring-up: zie [`bring_up_plan.md`](bring_up_plan.md).
 
 Issue tracker: Jira project **`PICO`** op
 [ejdetheije.atlassian.net](https://ejdetheije.atlassian.net/browse/PICO-1).

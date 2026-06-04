@@ -37,10 +37,15 @@ Stand per 2026-06-04:
     `Pin.IN, Pin.PULL_UP` voor de kale sensor.
 - Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: 1kΩ, 10kΩ
   en 220Ω zijn bevestigd aanwezig in de kit.
-- GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25** als losse
-  toevoegingen voor een latere variant van het weerstation. Geen blokker
-  voor het huidige experiment 01; wat ermee gebeurt wordt na 25 juni
-  beslist.
+- GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
+  wordt experiment 01 uitgebreid met drukmeting. Plan:
+  - Sensor op dezelfde I2C-bus als LCD (SDA=GPIO 0, SCL=GPIO 1, VCC=3V3).
+  - I2C-adres: `0x76` (SDO→GND) of `0x77` (SDO→3V3) — geen conflict met LCD.
+  - BME280 meet temp + vocht + druk → vervangt DHT11. BMP280 meet alleen
+    temp + druk → DHT11 blijft voor vochtigheid. Keuze na ontvangst.
+  - Nieuwe module `shared/bme280.py`, CSV-header krijgt kolom `druk_hpa`.
+  - LCD toont 2 regels — wisselende weergave of vaste keuze bepalen bij
+    implementatie.
 - Het bash `tools/upload.sh` is vervangen door **`tools/upload.ps1`**: de
   Windows-bash hier is WSL en heeft geen `mpremote` of directe COM-toegang.
   PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
