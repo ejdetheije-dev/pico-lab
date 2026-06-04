@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-04)
+## Status (2026-06-04) — sessie afgerond, volgende stap: PICO-11
 
 | Experiment             | Code | Bedraad | Getest | Jira Epic |
 |------------------------|------|---------|--------|-----------|
@@ -33,8 +33,14 @@ PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
 - Breadboard middengroef: jumper en Pico-pin altijd aan dezelfde kant.
 - RP2350 ADC offset: ~3000 raw bij GND is normaal.
 - 10kΩ verzadigt bij fel licht; 1kΩ + remapping werkt beter.
+- LDR-kalibratie verschuift bij het inkorten/verplaatsen van draden —
+  herbereken min_raw/max_raw met test_adc.py als bereik afwijkt.
 
 Weerstanden in kit: 1kΩ, 10kΩ en 220Ω bevestigd aanwezig.
+
+**Volgende sessie: PICO-11 starten (experiment 02 reactiemeting).**
+Weerstation blijft staan op het breadboard. Experiment 02 voegt toe:
+LED op GPIO 15, drukknop op GPIO 14. Geen conflicten met experiment 01.
 
 **Gepland na 2026-06-25 — drukmeting toevoegen aan experiment 01:**
 

@@ -57,9 +57,11 @@ Stand per 2026-06-04:
 ### LDR — afgerond (2026-06-04)
 
 - Bedrading: `3V3 → LDR → GPIO 26 → 1kΩ → GND`.
-- Gemeten bereik na kalibratie: vinger=19%, schaduw=55%, lamp=75%.
-- `shared/ldr.py` gebruikt software remapping: `min_raw=5600`, `max_raw=25000`.
-  Stel bij als de sensor verplaatst wordt of de omgeving sterk verandert.
+- `shared/ldr.py` gebruikt software remapping: `min_raw=2500`, `max_raw=21000`.
+- Gemeten bereik na kalibratie: vinger≈5%, schaduw≈43%, lamp≈74%.
+- **Let op:** kalibratie verschuift als draden worden ingekort of verplaatst.
+  Bij afwijkend bereik: `test_adc.py` uitvoeren, raw waarden noteren bij
+  vinger/schaduw/lamp, dan `min_raw` en `max_raw` herberekenen in `ldr.py`.
 
 **Valkuilen LDR (bewezen uit debug-sessie):**
 - **Breadboard middengroef:** jumper draad en Pico-pin ALTIJD aan dezelfde
