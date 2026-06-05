@@ -11,8 +11,8 @@ from machine import Pin, PWM, ADC
 
 LDR_LINKS_PIN = 28
 LDR_RECHTS_PIN = 26  # gedeeld met weerstation (experiment 01)
-SERVO_PIN = 7
-DREMPEL = 1500
+SERVO_PIN = 8
+DREMPEL = 300
 STAP_GRADEN = 2
 INTERVAL_MS = 80
 HOEK_MIN = 10
@@ -42,6 +42,13 @@ def lees_gemiddeld(adc, aantal=8):
     return sum(adc.read_u16() for _ in range(aantal)) // aantal
 
 
+def kalibreer(ldr_l, ldr_r, n=20):
+    """Meet het nulpuntverschil tussen beide LDR's bij gelijke belichting."""
+    offset = sum(lees_gemiddeld(ldr_l) - lees_gemiddeld(ldr_r) for _ in range(n)) // n
+    print("Kalibratie klaar. Offset:", offset)
+    return offset
+
+
 def main():
     ldr_l = ADC(Pin(LDR_LINKS_PIN))
     ldr_r = ADC(Pin(LDR_RECHTS_PIN))
@@ -49,11 +56,14 @@ def main():
     servo.zet(START_HOEK)
     time.sleep_ms(400)
 
+    print("Kalibreren... zorg voor gelijke belichting op beide LDR's")
+    offset = kalibreer(ldr_l, ldr_r)
+
     print("Solar tracker gestart. Drempel:", DREMPEL)
     while True:
         links = lees_gemiddeld(ldr_l)
         rechts = lees_gemiddeld(ldr_r)
-        verschil = links - rechts
+        verschil = (links - rechts) - offset
 
         if abs(verschil) > DREMPEL:
             doel = servo.hoek + (STAP_GRADEN if verschil > 0 else -STAP_GRADEN)

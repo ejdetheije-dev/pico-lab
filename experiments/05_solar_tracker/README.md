@@ -33,7 +33,7 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
    Servo:
    GND  (pin 38)   ----------- GND (bruin)
    VBUS (pin 40)   ----------- VCC (rood)
-   GPIO 7 (pin 10) ----------- SIGNAAL (oranje)
+   GPIO 8 (pin 11) ----------- SIGNAAL (oranje)
 ```
 
 Monteer beide LDR's naast elkaar op de servo-arm met een kartonnen schotje
