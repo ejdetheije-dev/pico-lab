@@ -12,31 +12,27 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-04:
+Stand per 2026-06-05:
 
 - Pico 2W is live op **COM8** met MicroPython v1.28.0 (RPI_PICO2_W),
   gemonteerd op breadboard, USB-C aangesloten op de Windows-laptop.
-- **Fase 0 van de bring-up afgerond:** PICO-7 (COM-poort detectie), PICO-8
-  (firmware flashen + onboard-LED knippertest) en PICO-9 (upload-workflow
-  valideren met dummy `experiments/00_smoketest/`) staan in Jira op Gereed.
-- **PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, experiment 01 volledig werkend, staat in Jira op Gereed):
+- **Fase 0 afgerond:** PICO-7, PICO-8, PICO-9 (Gereed in Jira).
+- **PICO-10 afgerond** (experiment 01 weerstation volledig werkend):
   - §1.1 voeding bewezen met LED + 1kΩ (geen multimeter beschikbaar).
   - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv). Sensor is
     **kaal** (geen PCB-module) — `Pin.IN, Pin.PULL_UP` expliciet meegeven.
   - §1.3 LCD 1602 op I2C0 (SDA=0, SCL=1, VCC=Vbus), adres `0x27`. Pinout
     valkuil: de `GND/VCC/SDA/SCL`-silkscreen labels staan op de **voorkant**
-    van het PCB-tje, niet op de achterkant — zie git geschiedenis voor de
-    debug-sessie.
+    van het PCB-tje, niet op de achterkant.
   - §1.4 combinatie + CSV-log: `experiments/01_weerstation/main.py` draait
     end-to-end. LCD toont temp+vocht, console logt per 5 s, CSV op
-    `:data/weerstation.csv` (Pico-flash). Voorbeeld-output: zie
-    `experiments/01_weerstation/data/weerstation.csv` (gitignored).
-- **Fixes uit deze run:**
-  - `shared/logger.py` maakt nu zelf de parent-directory aan als die ontbreekt.
-  - `experiments/01_weerstation/main.py` initialiseert de DHT11-pin met
-    `Pin.IN, Pin.PULL_UP` voor de kale sensor.
-- Freenove Ultimate Starter Kit is binnen. Beschikbare weerstanden: 1kΩ, 10kΩ
-  en 220Ω zijn bevestigd aanwezig in de kit.
+    `:data/weerstation.csv` (Pico-flash).
+- **PICO-22 afgerond** (experiment 05 solar tracker werkend, 2026-06-05):
+  - Twee LDR's: GPIO 26 (gedeeld met weerstation) en GPIO 28 (nieuw).
+  - Servo SG90 op GPIO 8 (GPIO 7 had slechte breadboard-verbinding).
+  - Opstartskalibratie compenseert nulpuntverschil tussen de twee LDR's.
+  - DREMPEL = 300 (1500 reageerde niet op lamplicht).
+  - Beide experimenten op het bord; draaien nooit tegelijk.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
   wordt experiment 01 uitgebreid met drukmeting. Plan:
   - Sensor op dezelfde I2C-bus als LCD (SDA=GPIO 0, SCL=GPIO 1, VCC=3V3).
@@ -44,15 +40,26 @@ Stand per 2026-06-04:
   - BME280 meet temp + vocht + druk → vervangt DHT11. BMP280 meet alleen
     temp + druk → DHT11 blijft voor vochtigheid. Keuze na ontvangst.
   - Nieuwe module `shared/bme280.py`, CSV-header krijgt kolom `druk_hpa`.
-  - LCD toont 2 regels — wisselende weergave of vaste keuze bepalen bij
-    implementatie.
 - Het bash `tools/upload.sh` is vervangen door **`tools/upload.ps1`**: de
   Windows-bash hier is WSL en heeft geen `mpremote` of directe COM-toegang.
   PowerShell is de natuurlijke shell op Windows. Docs zijn bijgewerkt.
 - Issue tracker: Jira project **`PICO`** op
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
-  starter-Taken (PICO-7 t/m PICO-24). Volgend ticket: PICO-11
-  (experiment 02 reactiemeting).
+  starter-Taken (PICO-7 t/m PICO-24).
+
+### Actuele pin-bezetting op het breadboard
+
+Beide experimenten staan tegelijk op het bord. Overzicht:
+
+| GPIO | Experiment 01 (weerstation) | Experiment 05 (solar tracker) |
+|------|-----------------------------|-------------------------------|
+| 0    | LCD SDA (I2C0)              | —                             |
+| 1    | LCD SCL (I2C0)              | —                             |
+| 8    | —                           | Servo signaal                 |
+| 16   | DHT11                       | —                             |
+| 26   | LDR                         | LDR rechts (gedeeld)          |
+| 28   | —                           | LDR links                     |
+| Vbus | LCD VCC                     | Servo VCC                     |
 
 ### LDR — afgerond (2026-06-04)
 
@@ -76,6 +83,25 @@ Stand per 2026-06-04:
 
 **Kit-inventaris bijgewerkt:** 10kΩ weerstanden zitten ook in de Freenove kit
 (naast de eerder gevonden 1kΩ en 220Ω).
+
+### Solar tracker — afgerond (2026-06-05)
+
+- Servo op GPIO 8 (GPIO 7 had slechte verbinding in die breadboard-rij).
+- Freenove SG90 draadkleuren: **bruin = GND, rood = VCC (Vbus), oranje = signaal**.
+- Twee LDR's lezen ongelijk in ambient licht → opstartskalibratie meet het
+  nulpuntverschil en trekt dat af van de delta. Zie `kalibreer()` in `main.py`.
+- DREMPEL = 300. Bij 1500 reageerde de servo niet op lamplicht.
+- `test_servo.py` beschikbaar als diagnostisch script voor servo-isolatietest.
+
+**Valkuilen servo (bewezen uit debug-sessie):**
+- **Losse pin in connector:** female dupont-connector kan halfingeplukt zijn.
+  Altijd controleren bij geen respons — ook al lijkt alles aangesloten.
+- **GPIO-rij defect:** als een pin niet reageert, probeer de buurpin.
+  GPIO 7 werkte niet, GPIO 8 wel.
+- **mpremote run stopt snel:** gebruik `cp :main.py` + `mpremote` voor
+  een persistent draaiend script. `mpremote run` keert terug zodra het klaar is.
+- **REPL multiline:** code kopiëren vanuit markdown geeft `IndentationError`.
+  Sla code op in een bestand en upload met `mpremote cp` of `upload.ps1`.
 
 ## Hardware inventaris
 
@@ -137,7 +163,7 @@ afwijken — documenteer dat dan in de `README.md` van het experiment.
 | RFID MISO            | GPIO 4             | SPI0                               |
 | RFID CS              | GPIO 5             | SPI0                               |
 | RFID RST             | GPIO 6             |                                    |
-| Servo 1..6           | GPIO 7..12         | PWM                                |
+| Servo 1..6           | GPIO 7..12         | PWM; exp 05 gebruikt GPIO 8        |
 | RGB LED R/G/B        | GPIO 13 / 14 / 15  | PWM                                |
 | DHT11                | GPIO 16            | 1-wire                             |
 | HC-SR04 trigger      | GPIO 17            |                                    |

@@ -3,44 +3,38 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-04) — sessie afgerond, volgende stap: PICO-11
+## Status (2026-06-05) — experiment 05 solar tracker afgerond
 
-| Experiment             | Code | Bedraad | Getest | Jira Epic |
+| Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
-| 01 weerstation         | ja   | ja      | ja     | PICO-2    |
+| 01 weerstation         | ja   | ja      | ja     | PICO-10   |
 | 02 reactiemeting       | ja   | nee     | nee    | PICO-3    |
 | 03 sonar               | ja   | nee     | nee    | PICO-4    |
 | 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
-| 05 solar tracker       | ja   | nee     | nee    | PICO-6    |
+| 05 solar tracker       | ja   | ja      | ja     | PICO-22   |
 
-Pico 2W is live op **COM8** met MicroPython v1.28.0. Fase 0 van de bring-up
-(PICO-7, PICO-8, PICO-9) is afgerond — upload-workflow gemigreerd naar
-PowerShell (`tools/upload.ps1`) en gevalideerd met dummy
-`experiments/00_smoketest/`.
+Pico 2W is live op **COM8** met MicroPython v1.28.0. Experiment 01 en 05
+staan tegelijk op het breadboard en delen GPIO 26 (LDR).
 
-**PICO-10 afgerond** (Fase 1 van `bring_up_plan.md`, Jira-status Gereed):
+**PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
-- §1.1 voeding bewezen via LED + 1kΩ (geen multimeter beschikbaar).
-- §1.2 DHT11 standalone op GPIO 16, kale sensor met `Pin.IN, Pin.PULL_UP`.
-- §1.3 LCD 1602 op I2C0 (adres `0x27`); pinout-labels op de voorkant van
-  de backpack-PCB.
-- §1.4 combinatie + CSV-log werkt: `main.py` draait, LCD toont temp+vocht,
-  CSV op de flash, op te halen met `mpremote cp :data/weerstation.csv .`.
-- §1.5 LDR op GPIO 26 (ADC0), bedrading `3V3 → LDR → GPIO 26 → 1kΩ → GND`,
-  software remapping (`min_raw=5600`, `max_raw=25000`), bereik 19–75%.
+- Servo SG90 op GPIO 8 (GPIO 7 had slechte breadboard-verbinding).
+- LDR links op GPIO 28, LDR rechts op GPIO 26 (gedeeld met weerstation).
+- 1kΩ weerstanden (10kΩ verzadigt bij fel licht).
+- Opstartskalibratie meet nulpuntverschil tussen de twee LDR's.
+- DREMPEL = 300 (1500 reageerde niet op lamplicht).
 
 **Valkuilen die bewezen zijn (zie ook CLAUDE.md):**
 - Breadboard middengroef: jumper en Pico-pin altijd aan dezelfde kant.
 - RP2350 ADC offset: ~3000 raw bij GND is normaal.
 - 10kΩ verzadigt bij fel licht; 1kΩ + remapping werkt beter.
-- LDR-kalibratie verschuift bij het inkorten/verplaatsen van draden —
-  herbereken min_raw/max_raw met test_adc.py als bereik afwijkt.
+- LDR-kalibratie verschuift bij het inkorten/verplaatsen van draden.
+- GPIO-rij defect: als pin niet reageert, probeer buurpin.
+- Servo dupont-connector: altijd controleren op losse pin bij geen respons.
+- Twee LDR's op verschillende posities lezen ongelijk → offset-kalibratie.
+- mpremote run stopt snel → gebruik `cp :main.py` + `mpremote` voor persistent script.
 
 Weerstanden in kit: 1kΩ, 10kΩ en 220Ω bevestigd aanwezig.
-
-**Volgende sessie: PICO-11 starten (experiment 02 reactiemeting).**
-Weerstation blijft staan op het breadboard. Experiment 02 voegt toe:
-LED op GPIO 15, drukknop op GPIO 14. Geen conflicten met experiment 01.
 
 **Gepland na 2026-06-25 — drukmeting toevoegen aan experiment 01:**
 
@@ -105,7 +99,7 @@ reactiemeting).
 
 - **Leerdoel:** Twee analoge sensoren vergelijken, gesloten regelkring,
   hysterese om jitter te voorkomen.
-- **Hardware:** Pico 2W, 2x LDR, 2x 10kΩ weerstand, SG90 servo, breadboard.
+- **Hardware:** Pico 2W, 2x LDR, 2x 1kΩ weerstand, SG90 servo, breadboard.
 - **Bouwtijd:** ~60 min.
 - **Wetenschappelijke vraag:** Hoe snel kan de servo het lichtste punt volgen,
   en wat is de minimale lichtverschil-drempel waarop hij betrouwbaar reageert?
