@@ -10,7 +10,7 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
 
 - Raspberry Pi Pico 2W
 - 2x LDR (fotoresistor)
-- 2x 10kΩ weerstand (pull-down voor spanningsdeler)
+- 2x 1kΩ weerstand (pull-down voor spanningsdeler; 10kΩ verzadigt bij fel licht)
 - SG90 micro servo
 - Klein kartonnen tussenschot tussen de twee LDR's (5–10 mm hoog)
 - Breadboard, jumper wires
@@ -26,7 +26,7 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
                     (gelijk) |             (gelijk)|
                              +--- ADC2     |       +--- ADC1
                              |  (GPIO 28)  |       | (GPIO 27)
-                            [10kR]         |     [10kR]
+                            [1kR]         |     [1kR]
                              |             |       |
                             GND           GND     GND
 
