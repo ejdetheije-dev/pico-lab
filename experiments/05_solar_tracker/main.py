@@ -9,8 +9,8 @@ import time
 from machine import Pin, PWM, ADC
 
 
-LDR_LINKS_PIN = 26
-LDR_RECHTS_PIN = 27
+LDR_LINKS_PIN = 28
+LDR_RECHTS_PIN = 26  # gedeeld met weerstation (experiment 01)
 SERVO_PIN = 7
 DREMPEL = 1500
 STAP_GRADEN = 2
