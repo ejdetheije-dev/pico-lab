@@ -9,7 +9,7 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
 ## Benodigde componenten
 
 - Raspberry Pi Pico 2W
-- 2x LDR (fotoresistor)
+- 2x LDR (fotoresistor) — LDR rechts is gedeeld met experiment 01 (weerstation) op GPIO 26
 - 2x 1kΩ weerstand (pull-down voor spanningsdeler; 10kΩ verzadigt bij fel licht)
 - SG90 micro servo
 - Klein kartonnen tussenschot tussen de twee LDR's (5–10 mm hoog)
@@ -24,9 +24,9 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
    3.3V (pin 36) ----+----- LDR_L           +---- LDR_R
                      |       |              |      |
                     (gelijk) |             (gelijk)|
-                             +--- ADC2     |       +--- ADC1
-                             |  (GPIO 28)  |       | (GPIO 27)
-                            [1kR]         |     [1kR]
+                             +--- ADC2     |       +--- ADC0
+                             |  (GPIO 28)  |       | (GPIO 26) *gedeeld met weerstation*
+                            [1kR]          |      [1kR]
                              |             |       |
                             GND           GND     GND
 

@@ -57,6 +57,7 @@ Stand per 2026-06-04:
 ### LDR — afgerond (2026-06-04)
 
 - Bedrading: `3V3 → LDR → GPIO 26 → 1kΩ → GND`.
+- GPIO 26 is gedeeld: experiment 01 (weerstation) en experiment 05 (solar tracker LDR rechts) gebruiken dezelfde fysieke LDR. Beide experimenten draaien nooit tegelijk.
 - `shared/ldr.py` gebruikt software remapping: `min_raw=2500`, `max_raw=21000`.
 - Gemeten bereik na kalibratie: vinger≈5%, schaduw≈43%, lamp≈74%.
 - **Let op:** kalibratie verschuift als draden worden ingekort of verplaatst.
@@ -145,9 +146,10 @@ afwijken — documenteer dat dan in de `README.md` van het experiment.
 | IR ontvanger         | GPIO 20            |                                    |
 | Kantelschakelaar     | GPIO 21            |                                    |
 | Joystick knop        | GPIO 22            |                                    |
-| LDR / joystick X     | GPIO 26 (ADC0)     | Analoog                            |
+| LDR / joystick X     | GPIO 26 (ADC0)     | Analoog; gedeeld: weerstation + solar tracker LDR rechts |
 | LDR2 / joystick Y    | GPIO 27 (ADC1)     | Analoog                            |
-| Geluidssensor (A)    | GPIO 28 (ADC2)     | Analoog                            |
+| Solar tracker LDR links | GPIO 28 (ADC2)  | Analoog; alleen experiment 05      |
+| Geluidssensor (A)    | GPIO 28 (ADC2)     | Analoog; niet tegelijk met exp 05  |
 
 Stappenmotor en knop voor experiment 02 krijgen pins toegewezen die in dat
 experiment vrij zijn — vermeld dit altijd in het bedradingsschema.
