@@ -47,6 +47,21 @@ Stand per 2026-06-05:
   `https://ejdetheije.atlassian.net`. 6 Epics (PICO-1 t/m PICO-6) en 18
   starter-Taken (PICO-7 t/m PICO-24).
 
+### Schakelen tussen experimenten
+
+Beide experimenten staan tegelijk op het breadboard. Schakelen = ander
+experiment uploaden, Pico herstart automatisch:
+
+```powershell
+# Weerstation
+.\tools\upload.ps1 experiments\01_weerstation
+mpremote
+
+# Solar tracker
+.\tools\upload.ps1 experiments\05_solar_tracker
+mpremote
+```
+
 ### Actuele pin-bezetting op het breadboard
 
 Beide experimenten staan tegelijk op het bord. Overzicht:
