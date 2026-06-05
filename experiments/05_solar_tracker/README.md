@@ -24,8 +24,8 @@ lokaliseren door hun ADC-waarden te vergelijken. Met een gepaste drempel
    3.3V (pin 36) ----+----- LDR_L           +---- LDR_R
                      |       |              |      |
                     (gelijk) |             (gelijk)|
-                             +--- ADC0     |       +--- ADC1
-                             |  (GPIO 26)  |       | (GPIO 27)
+                             +--- ADC2     |       +--- ADC1
+                             |  (GPIO 28)  |       | (GPIO 27)
                             [10kR]         |     [10kR]
                              |             |       |
                             GND           GND     GND

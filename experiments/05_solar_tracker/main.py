@@ -9,7 +9,7 @@ import time
 from machine import Pin, PWM, ADC
 
 
-LDR_LINKS_PIN = 26
+LDR_LINKS_PIN = 28
 LDR_RECHTS_PIN = 27
 SERVO_PIN = 7
 DREMPEL = 1500
