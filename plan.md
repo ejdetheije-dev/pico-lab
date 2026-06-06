@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-05) — experiment 05 solar tracker afgerond
+## Status (2026-06-06) — experiment 06 Nexus in planning
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -12,9 +12,10 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 03 sonar               | ja   | nee     | nee    | PICO-4    |
 | 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
 | 05 solar tracker       | ja   | ja      | ja     | PICO-22   |
+| 06 nexus               | nee  | nee     | nee    | PICO-25   |
 
 Pico 2W is live op **COM8** met MicroPython v1.28.0. Experiment 01 en 05
-staan tegelijk op het breadboard en delen GPIO 26 (LDR).
+staan nog op het breadboard — board wordt leeggemaakt voor Nexus.
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
@@ -59,6 +60,7 @@ reactiemeting).
 3. `03_sonar` — leer afstand meten en visualiseren met RGB LED
 4. `04_servo_wijzer` — eerste actuator-experiment (PWM, servo)
 5. `05_solar_tracker` — sensor + actuator regelkring
+6. `06_nexus` — WiFi, Supabase, React-dashboard; board wordt leeggemaakt
 
 ## Experiment 01 — Weerstation
 
@@ -103,6 +105,48 @@ reactiemeting).
 - **Bouwtijd:** ~60 min.
 - **Wetenschappelijke vraag:** Hoe snel kan de servo het lichtste punt volgen,
   en wat is de minimale lichtverschil-drempel waarop hij betrouwbaar reageert?
+
+## Experiment 06 — Nexus
+
+- **Concept:** Permanente hub die continu meet en op afstand bedienbaar is.
+  Kernpatroon: Pico → Supabase → React-website en terug.
+- **Hardware:** Pico 2W, DHT11, LDR, HC-SR04, geluidssensor, IR ontvanger,
+  LCD 1602, buzzer. Board wordt leeggemaakt voor de start.
+- **Stack:** MicroPython op Pico · Supabase (Postgres + REST) · Vite + React
+  + TypeScript + Tailwind · Vercel/Netlify deployment.
+- **Credentials:** `config.py` gitignored, `config.example.py` gecommit.
+
+### Fase 0 — Infrastructuur (Jira PICO-26/27/28)
+
+- [ ] PICO-26: Supabase project aanmaken + tabellen aanleggen
+- [ ] PICO-27: Projectmapstructuur aanmaken + config.py inrichten
+- [ ] PICO-28: Pico WiFi + HTTP POST naar Supabase valideren
+
+### Fase 1 — MVP Pico (Jira PICO-29/30/31/32)
+
+- [ ] PICO-29: `supabase.py` HTTP wrapper schrijven (POST en GET)
+- [ ] PICO-30: Hardware bouwen: board leegmaken + Nexus bedraden
+- [ ] PICO-31: DHT11 periodiek loggen naar `sensor_readings`
+- [ ] PICO-32: HC-SR04 bewegingsdetectie naar `events` + LCD toont event
+
+### Fase 1 — MVP Website (Jira PICO-33/34)
+
+- [ ] PICO-33: `nexus-web/` opzetten: Vite + React + TypeScript + Tailwind
+- [ ] PICO-34: Dashboard: live sensorwaarden via Supabase
+
+### Fase 2 (Jira PICO-35/36/37)
+
+- [ ] PICO-35: Geluidssensor event detectie
+- [ ] PICO-36: Commands queue: `display_message` + `buzzer` vanuit website
+- [ ] PICO-37: Settings: poll interval instelbaar via website
+
+### Fase 3 (Jira PICO-38/39/40)
+
+- [ ] PICO-38: IR bediening + LCD menu
+- [ ] PICO-39: BME280 integreren (na levering 2026-06-25)
+- [ ] PICO-40: Website: grafieken + event log met filtering
+
+---
 
 ## Openstaande verbeteringen (later oppakken)
 

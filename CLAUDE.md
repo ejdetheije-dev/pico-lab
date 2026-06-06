@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-05:
+Stand per 2026-06-06:
 
 - Pico 2W is live op **COM8** met MicroPython v1.28.0 (RPI_PICO2_W),
   gemonteerd op breadboard, USB-C aangesloten op de Windows-laptop.
@@ -33,6 +33,10 @@ Stand per 2026-06-05:
   - Opstartskalibratie compenseert nulpuntverschil tussen de twee LDR's.
   - DREMPEL = 300 (1500 reageerde niet op lamplicht).
   - Beide experimenten op het bord; draaien nooit tegelijk.
+- **Experiment 06 (Nexus) in planning** (2026-06-06): WiFi-connected hub
+  met Supabase backend en React-dashboard. Board wordt **leeggemaakt** voor
+  de start. Jira Epic PICO-25, taken PICO-26 t/m PICO-40 aangemaakt.
+  Zie sectie 'Experiment 06 — Nexus' hieronder.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
   wordt experiment 01 uitgebreid met drukmeting. Plan:
   - Sensor op dezelfde I2C-bus als LCD (SDA=GPIO 0, SCL=GPIO 1, VCC=3V3).
@@ -117,6 +121,95 @@ Beide experimenten staan tegelijk op het bord. Overzicht:
   een persistent draaiend script. `mpremote run` keert terug zodra het klaar is.
 - **REPL multiline:** code kopiëren vanuit markdown geeft `IndentationError`.
   Sla code op in een bestand en upload met `mpremote cp` of `upload.ps1`.
+
+## Experiment 06 — Nexus
+
+Nexus is een permanente hub die continu meet, events logt en op afstand
+bedienbaar is via een React-website. Kernpatroon:
+
+**Pico meet/detecteert → Supabase → website**
+**Website stuurt commando → Supabase → Pico voert uit**
+
+Het breadboard wordt **leeggemaakt** voordat dit experiment wordt opgebouwd.
+Experimenten 01 en 05 blijven in de repo maar zijn niet meer bedraad.
+
+### Voorgestelde mapstructuur (nog niet aangemaakt)
+
+```
+experiments/06_nexus/
+├── main.py               # Hoofdloop
+├── config.py             # Gitignored — echte WiFi + Supabase credentials
+├── config.example.py     # Gecommit — placeholders voor nieuwe installatie
+├── supabase.py           # HTTP wrapper (GET/POST naar Supabase REST)
+├── sensors/
+│   ├── dht11.py
+│   ├── ldr.py
+│   ├── hcsr04.py
+│   ├── sound.py
+│   ├── ir.py
+│   └── bme280.py         # Toevoegen na ontvangst op 2026-06-25
+├── output/
+│   ├── lcd.py
+│   └── buzzer.py
+└── handlers/
+    ├── event_handler.py
+    └── command_handler.py
+
+nexus-web/                # Root van pico-lab repo — aparte tech-stack
+├── src/
+│   ├── pages/
+│   │   ├── Dashboard.tsx
+│   │   ├── Events.tsx
+│   │   ├── Commands.tsx
+│   │   └── Settings.tsx
+│   ├── lib/
+│   │   └── supabase.ts
+│   └── components/
+│       ├── SensorCard.tsx
+│       ├── EventLog.tsx
+│       └── CommandForm.tsx
+├── package.json
+└── vite.config.ts
+```
+
+Website-stack: **Vite + React + TypeScript + Tailwind CSS** met Supabase JS
+client. Deployment via Vercel of Netlify (gratis tier).
+
+### Pin-tabel Nexus
+
+Leeg bord, alle pins beschikbaar. Toewijzing op basis van standaard pinout.
+
+| GPIO | Component | Functie |
+|------|-----------|---------|
+| 0 | LCD 1602 SDA | I2C0 data |
+| 1 | LCD 1602 SCL | I2C0 klok |
+| 9 | Buzzer passief | PWM toon |
+| 13 | RGB LED R | PWM (toekomstig) |
+| 14 | RGB LED G | PWM (toekomstig) |
+| 15 | RGB LED B | PWM (toekomstig) |
+| 16 | DHT11 | 1-wire |
+| 17 | HC-SR04 trigger | Digitaal uit |
+| 18 | HC-SR04 echo | Digitaal in |
+| 19 | Geluidssensor (D) | Digitaal interrupt |
+| 20 | IR ontvanger | Digitaal interrupt |
+| 26 | LDR | ADC0 |
+| Vbus | LCD VCC, Servo VCC | 5V via USB |
+
+### Credentials
+
+`config.py` is gitignored. `config.example.py` wordt gecommit met placeholders:
+
+```python
+# config.example.py — kopieer naar config.py en vul in
+WIFI_SSID = "jouw-netwerk"
+WIFI_PASSWORD = "jouw-wachtwoord"
+SUPABASE_URL = "https://xxxx.supabase.co"
+SUPABASE_KEY = "eyJ..."
+```
+
+Voeg `experiments/06_nexus/config.py` toe aan `.gitignore` voor de eerste commit.
+
+---
 
 ## Hardware inventaris
 
