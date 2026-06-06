@@ -14,29 +14,23 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 Stand per 2026-06-06:
 
-- Pico 2W is live op **COM8** met MicroPython v1.28.0 (RPI_PICO2_W),
-  gemonteerd op breadboard, USB-C aangesloten op de Windows-laptop.
+- **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
+  Oude Pico (COM8) niet meer in gebruik voor Nexus.
 - **Fase 0 afgerond:** PICO-7, PICO-8, PICO-9 (Gereed in Jira).
 - **PICO-10 afgerond** (experiment 01 weerstation volledig werkend):
-  - §1.1 voeding bewezen met LED + 1kΩ (geen multimeter beschikbaar).
-  - §1.2 DHT11 op GPIO 16 leest in REPL `23 52` (°C / % rv). Sensor is
-    **kaal** (geen PCB-module) — `Pin.IN, Pin.PULL_UP` expliciet meegeven.
-  - §1.3 LCD 1602 op I2C0 (SDA=0, SCL=1, VCC=Vbus), adres `0x27`. Pinout
-    valkuil: de `GND/VCC/SDA/SCL`-silkscreen labels staan op de **voorkant**
-    van het PCB-tje, niet op de achterkant.
-  - §1.4 combinatie + CSV-log: `experiments/01_weerstation/main.py` draait
-    end-to-end. LCD toont temp+vocht, console logt per 5 s, CSV op
-    `:data/weerstation.csv` (Pico-flash).
+  - DHT11 op GPIO 16, kaal — `Pin.IN, Pin.PULL_UP` expliciet meegeven.
+  - LCD 1602 op I2C0 (SDA=0, SCL=1, VCC=Vbus), adres `0x27`.
 - **PICO-22 afgerond** (experiment 05 solar tracker werkend, 2026-06-05):
-  - Twee LDR's: GPIO 26 (gedeeld met weerstation) en GPIO 28 (nieuw).
-  - Servo SG90 op GPIO 8 (GPIO 7 had slechte breadboard-verbinding).
-  - Opstartskalibratie compenseert nulpuntverschil tussen de twee LDR's.
-  - DREMPEL = 300 (1500 reageerde niet op lamplicht).
-  - Beide experimenten op het bord; draaien nooit tegelijk.
-- **Experiment 06 (Nexus) in planning** (2026-06-06): WiFi-connected hub
-  met Supabase backend en React-dashboard. Board wordt **leeggemaakt** voor
-  de start. Jira Epic PICO-25, taken PICO-26 t/m PICO-40 aangemaakt.
-  Zie sectie 'Experiment 06 — Nexus' hieronder.
+  - Servo SG90 op GPIO 8, LDR's op GPIO 26 en 28, DREMPEL = 300.
+- **PICO-26 t/m PICO-32 afgerond** (experiment 06 Nexus MVP, 2026-06-06):
+  - Supabase project `nexus` op `https://xzmsrsuxnuiokonjavws.supabase.co`.
+  - Vier tabellen: `sensor_readings`, `events`, `commands`, `settings`.
+  - Nexus breadboard: LCD (GPIO 0/1/Vbus), DHT11 (GPIO 16),
+    HC-SR04 (GPIO 17/18), LDR (GPIO 26 + 1kΩ).
+  - `experiments/06_nexus/main.py` draait: DHT11 logt elke 60s,
+    HC-SR04 detecteert beweging, LCD toont status.
+  - Supabase publishable key in `config.py` (gitignored).
+- **Volgende stap: PICO-33** — nexus-web opzetten met Vite + React + TS + Tailwind.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
   wordt experiment 01 uitgebreid met drukmeting. Plan:
   - Sensor op dezelfde I2C-bus als LCD (SDA=GPIO 0, SCL=GPIO 1, VCC=3V3).

@@ -3,19 +3,20 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-06) — experiment 06 Nexus in planning
+## Status (2026-06-06) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
-| 01 weerstation         | ja   | ja      | ja     | PICO-10   |
+| 01 weerstation         | ja   | nee     | ja     | PICO-10   |
 | 02 reactiemeting       | ja   | nee     | nee    | PICO-3    |
 | 03 sonar               | ja   | nee     | nee    | PICO-4    |
 | 04 servo-wijzer        | ja   | nee     | nee    | PICO-5    |
-| 05 solar tracker       | ja   | ja      | ja     | PICO-22   |
-| 06 nexus               | nee  | nee     | nee    | PICO-25   |
+| 05 solar tracker       | ja   | nee     | ja     | PICO-22   |
+| 06 nexus               | ja   | ja      | ja     | PICO-25   |
 
-Pico 2W is live op **COM8** met MicroPython v1.28.0. Experiment 01 en 05
-staan nog op het breadboard — board wordt leeggemaakt voor Nexus.
+Nieuwe Pico 2W op **COM9** met MicroPython (voorgeïnstalleerd). Board is
+leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR.
+PICO-26 t/m PICO-32 zijn Gereed. Volgende stap: PICO-33 (nexus-web).
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
@@ -118,16 +119,16 @@ reactiemeting).
 
 ### Fase 0 — Infrastructuur (Jira PICO-26/27/28)
 
-- [ ] PICO-26: Supabase project aanmaken + tabellen aanleggen
-- [ ] PICO-27: Projectmapstructuur aanmaken + config.py inrichten
-- [ ] PICO-28: Pico WiFi + HTTP POST naar Supabase valideren
+- [x] PICO-26: Supabase project aanmaken + tabellen aanleggen
+- [x] PICO-27: Projectmapstructuur aanmaken + config.py inrichten
+- [x] PICO-28: Pico WiFi + HTTP POST naar Supabase valideren
 
 ### Fase 1 — MVP Pico (Jira PICO-29/30/31/32)
 
-- [ ] PICO-29: `supabase.py` HTTP wrapper schrijven (POST en GET)
-- [ ] PICO-30: Hardware bouwen: board leegmaken + Nexus bedraden
-- [ ] PICO-31: DHT11 periodiek loggen naar `sensor_readings`
-- [ ] PICO-32: HC-SR04 bewegingsdetectie naar `events` + LCD toont event
+- [x] PICO-29: `supabase.py` HTTP wrapper schrijven (POST en GET)
+- [x] PICO-30: Hardware bouwen: board leegmaken + Nexus bedraden
+- [x] PICO-31: DHT11 periodiek loggen naar `sensor_readings`
+- [x] PICO-32: HC-SR04 bewegingsdetectie naar `events` + LCD toont event
 
 ### Fase 1 — MVP Website (Jira PICO-33/34)
 
