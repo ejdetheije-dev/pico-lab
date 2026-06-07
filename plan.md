@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-06) — experiment 06 Nexus actief
+## Status (2026-06-07) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -15,8 +15,9 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 06 nexus               | ja   | ja      | ja     | PICO-25   |
 
 Nieuwe Pico 2W op **COM9** met MicroPython (voorgeïnstalleerd). Board is
-leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR.
-PICO-26 t/m PICO-32 zijn Gereed. Volgende stap: PICO-33 (nexus-web).
+leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR, buzzer.
+PICO-26 t/m PICO-34 en PICO-36 zijn Gereed. PICO-35 overgeslagen (geluidssensor
+niet gevonden). Volgende stap: PICO-37 (poll interval instelbaar).
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
@@ -132,13 +133,13 @@ reactiemeting).
 
 ### Fase 1 — MVP Website (Jira PICO-33/34)
 
-- [ ] PICO-33: `nexus-web/` opzetten: Vite + React + TypeScript + Tailwind
-- [ ] PICO-34: Dashboard: live sensorwaarden via Supabase
+- [x] PICO-33: `nexus-web/` opzetten: Vite + React + TypeScript + Tailwind
+- [x] PICO-34: Dashboard: live sensorwaarden via Supabase
 
 ### Fase 2 (Jira PICO-35/36/37)
 
-- [ ] PICO-35: Geluidssensor event detectie
-- [ ] PICO-36: Commands queue: `display_message` + `buzzer` vanuit website
+- [ ] PICO-35: Geluidssensor event detectie (overgeslagen — sensor niet gevonden)
+- [x] PICO-36: Commands queue: `display_message` + `buzzer` vanuit website
 - [ ] PICO-37: Settings: poll interval instelbaar via website
 
 ### Fase 3 (Jira PICO-38/39/40)

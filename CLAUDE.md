@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-06:
+Stand per 2026-06-07:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -30,7 +30,25 @@ Stand per 2026-06-06:
   - `experiments/06_nexus/main.py` draait: DHT11 logt elke 60s,
     HC-SR04 detecteert beweging, LCD toont status.
   - Supabase publishable key in `config.py` (gitignored).
-- **Volgende stap: PICO-33** — nexus-web opzetten met Vite + React + TS + Tailwind.
+- **PICO-33 t/m PICO-36 afgerond** (nexus-web + commands, 2026-06-07):
+  - `nexus-web/` opgezet: Vite + React + TypeScript + Tailwind CSS + Supabase JS.
+  - Dashboard toont live temperatuur en luchtvochtigheid (polling 5s).
+  - Commands-pagina: `display_message` toont tekst op LCD, `buzzer` speelt toon.
+  - Passieve buzzer aangesloten op GPIO 9 (PWM, 200–2000Hz werkt).
+  - `tools/upload.ps1` verbeterd: uploadt nu ook submappen en losse `.py`
+    bestanden uit de experimentmap (excl. `config.py` en `test_*.py`).
+- **PICO-35 overgeslagen** (geluidssensor niet gevonden, later oppakken).
+- **Volgende stap: PICO-37** — poll interval instelbaar via website.
+
+### Supabase kolomnamen (bewezen uit debug-sessie)
+
+| Tabel | Kolommen |
+|-------|----------|
+| `commands` | `id`, `command` (niet `type`!), `payload`, `created_at`, `executed_at` |
+| `sensor_readings` | `id`, `sensor`, `value` (geen `created_at`) |
+| `events` | `id`, `type`, `payload` |
+
+RLS is uitgeschakeld op alle tabellen — anon key heeft volledige toegang.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
   wordt experiment 01 uitgebreid met drukmeting. Plan:
   - Sensor op dezelfde I2C-bus als LCD (SDA=GPIO 0, SCL=GPIO 1, VCC=3V3).
