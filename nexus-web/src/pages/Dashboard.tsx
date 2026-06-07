@@ -5,7 +5,7 @@ import SensorCard from '../components/SensorCard'
 type Reading = {
   sensor: string
   value: number
-  [key: string]: unknown
+  created_at: string
 }
 
 const SENSOR_META: Record<string, { label: string; unit: string }> = {
@@ -16,7 +16,7 @@ const SENSOR_META: Record<string, { label: string; unit: string }> = {
 async function fetchLatest(): Promise<Record<string, Reading>> {
   const { data, error } = await supabase
     .from('sensor_readings')
-    .select('*')
+    .select('sensor, value, created_at')
     .order('id', { ascending: false })
     .limit(20)
 
@@ -51,7 +51,7 @@ export default function Dashboard() {
               label={meta.label}
               value={r?.value ?? null}
               unit={meta.unit}
-              updatedAt={null}
+              updatedAt={r?.created_at ?? null}
             />
           )
         })}
