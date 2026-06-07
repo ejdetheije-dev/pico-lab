@@ -5,6 +5,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from output.lcd import LCD
+from output.buzzer import Buzzer
 
 POLL_INTERVAL = 60
 BEWEGING_DREMPEL = 50
@@ -29,6 +30,7 @@ verbind_wifi()
 dht11 = DHT11()
 sonar = HCSR04()
 lcd = LCD()
+buzzer = Buzzer()
 
 laatste_temp, laatste_vocht = dht11.lees()
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
@@ -65,6 +67,17 @@ while True:
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
         laatste_sensor_log = nu
+
+    # Commands verwerken
+    for cmd in supabase.get_pending_commands():
+        type_ = cmd.get("command")
+        payload = cmd.get("payload") or {}
+        if type_ == "display_message":
+            lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
+            time.sleep(3)
+        elif type_ == "buzzer":
+            buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
+        supabase.mark_executed(cmd["id"])
 
     # LCD bijwerken
     lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", laatste_event)
