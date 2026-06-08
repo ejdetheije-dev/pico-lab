@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-07) — experiment 06 Nexus actief
+## Status (2026-06-08) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -17,7 +17,9 @@ combineren, ten slotte sensor + actuator als regelkring.
 Nieuwe Pico 2W op **COM9** met MicroPython (voorgeïnstalleerd). Board is
 leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR, buzzer.
 PICO-26 t/m PICO-34 en PICO-36 zijn Gereed. PICO-35 overgeslagen (geluidssensor
-niet gevonden). Volgende stap: PICO-37 (poll interval instelbaar).
+niet gevonden — vervangen door PICO-42 met KY-038). Volgende stappen: PICO-37
+(poll interval), PICO-41 (BMP180, al in huis), PICO-42 (KY-038, arriveert
+2026-06-11 samen met 4-kanaals relaimodule + 12V ventilator).
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
@@ -142,11 +144,13 @@ reactiemeting).
 - [x] PICO-36: Commands queue: `display_message` + `buzzer` vanuit website
 - [ ] PICO-37: Settings: poll interval instelbaar via website
 
-### Fase 3 (Jira PICO-38/39/40)
+### Fase 3 (Jira PICO-38/39/40/41/42)
 
 - [ ] PICO-38: IR bediening + LCD menu
 - [ ] PICO-39: BME280 integreren (na levering 2026-06-25)
 - [ ] PICO-40: Website: grafieken + event log met filtering
+- [ ] PICO-42: KY-038 geluidssensor event detectie (arriveert 2026-06-11)
+- [ ] PICO-43: 4-kanaals relaimodule + 12V ventilator via website bedienen (arriveert 2026-06-11)
 
 ---
 

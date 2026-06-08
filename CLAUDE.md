@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-07:
+Stand per 2026-06-08:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -37,8 +37,17 @@ Stand per 2026-06-07:
   - Passieve buzzer aangesloten op GPIO 9 (PWM, 200–2000Hz werkt).
   - `tools/upload.ps1` verbeterd: uploadt nu ook submappen en losse `.py`
     bestanden uit de experimentmap (excl. `config.py` en `test_*.py`).
-- **PICO-35 overgeslagen** (geluidssensor niet gevonden, later oppakken).
-- **Volgende stap: PICO-37** — poll interval instelbaar via website.
+- **PICO-35 overgeslagen** (geluidssensor niet gevonden — vervangen door PICO-42 KY-038).
+- **Volgende stappen:** PICO-37 (poll interval), PICO-41 (BMP180), PICO-42 (KY-038 woensdag 2026-06-11).
+
+### Nieuwe hardware — beschikbaar en onderweg
+
+- **BMP180** (al in huis): module reageert niet op I2C — pinout onduidelijk, overgeslagen. PICO-41 geannuleerd.
+- **KY-038 geluidssensor** (arriveert 2026-06-11): D0 → GPIO 19 (al gereserveerd),
+  drempel instelbaar via trimmer op module. Ticket: PICO-42.
+- **4-kanaals relaimodule + 12V adaptor + 12V ventilator** (arriveert 2026-06-11):
+  één relaiskanaal stuurt de ventilator, Pico GPIO stuurt relai aan. Maakt
+  afstandsbediening van 12V-apparaten mogelijk vanuit de website. Ticket: PICO-43.
 
 ### Supabase kolomnamen (bewezen uit debug-sessie)
 
