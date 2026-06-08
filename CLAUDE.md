@@ -163,6 +163,7 @@ is de GND-rail.
 | Buzzer (actief + passief) | Digitaal of PWM | Toon                              |
 | 7-segment display    | 7-8x digitaal      | Cijferweergave                     |
 | LCD 1602 (I2C)       | I2C                | 16x2 tekst                         |
+| Relaismodule 4-kanaals | 4x digitaal      | Keenso, 5V, optocoupler, 10A, hoog/laag trigger instelbaar via jumper |
 
 ## Pinout-conventies
 
