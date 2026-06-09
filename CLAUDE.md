@@ -275,6 +275,12 @@ is de GND-rail.
 | RFID RC522           | SPI                | Kaartlezing                        |
 | Joystick module      | 2x ADC + digitaal  | X, Y, knop                         |
 
+### Sensoren (los besteld)
+
+| Sensor               | Interface          | Aantal | Opmerking                          |
+|----------------------|--------------------|--------|------------------------------------|
+| JZK fotoresistor sensormodule | Digitaal (D0) + optioneel analoog (A0) | 5x | Drempel instelbaar via trimmer op module; ingebouwde pull-up weerstand — geen losse R nodig |
+
 ### Actuatoren
 
 | Component            | Interface          | Opmerking                          |
