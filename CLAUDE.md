@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-08:
+Stand per 2026-06-09:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -38,7 +38,15 @@ Stand per 2026-06-08:
   - `tools/upload.ps1` verbeterd: uploadt nu ook submappen en losse `.py`
     bestanden uit de experimentmap (excl. `config.py` en `test_*.py`).
 - **PICO-35 overgeslagen** (geluidssensor niet gevonden — vervangen door PICO-42 KY-038).
-- **Volgende stappen:** PICO-37 (poll interval), PICO-41 (BMP180), PICO-42 (KY-038 woensdag 2026-06-11).
+- **Nexus netwerkstabiliteit verbeterd (2026-06-09):**
+  - `supabase.py` gesplitst in `_auth` (GET) en `_write_headers` (POST/PATCH).
+    `Prefer: return=minimal` en `Connection: close` correct per requesttype.
+  - Retry-logica: één herpoging na 500ms bij `OSError` (ECONNRESET) in alle
+    netwerkfuncties — loop crasht nooit meer bij netwerkstoringen.
+  - Commands worden elke 10s gepollt i.p.v. elke seconde (was 60 HTTPS/min).
+  - `laatste_sensor_log` update na inserts i.p.v. vóór — voorkomt rapid-fire logging.
+- **Volgende stappen:** PICO-37 (poll interval via website), PICO-42 (KY-038 woensdag 2026-06-11),
+  PICO-43 (relaimodule + ventilator woensdag 2026-06-11).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 

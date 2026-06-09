@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-08) — experiment 06 Nexus actief
+## Status (2026-06-09) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -17,9 +17,10 @@ combineren, ten slotte sensor + actuator als regelkring.
 Nieuwe Pico 2W op **COM9** met MicroPython (voorgeïnstalleerd). Board is
 leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR, buzzer.
 PICO-26 t/m PICO-34 en PICO-36 zijn Gereed. PICO-35 overgeslagen (geluidssensor
-niet gevonden — vervangen door PICO-42 met KY-038). Volgende stappen: PICO-37
-(poll interval), PICO-41 (BMP180, al in huis), PICO-42 (KY-038, arriveert
-2026-06-11 samen met 4-kanaals relaimodule + 12V ventilator).
+niet gevonden — vervangen door PICO-42 met KY-038). PICO-41 geannuleerd (BMP180
+reageert niet op I2C). Nexus netwerkstabiliteit verbeterd op 2026-06-09: retry-logica,
+aparte headers GET/POST, command poll elke 10s. Volgende stappen: PICO-37
+(poll interval via website), PICO-42 + PICO-43 (KY-038 + relaimodule, arriveert 2026-06-11).
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
