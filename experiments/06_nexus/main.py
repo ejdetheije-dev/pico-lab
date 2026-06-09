@@ -4,6 +4,7 @@ from config import WIFI_SSID, WIFI_PASSWORD
 import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
+from sensors.ldr import LDR
 from output.lcd import LCD
 from output.buzzer import Buzzer
 
@@ -29,6 +30,7 @@ verbind_wifi()
 
 dht11 = DHT11()
 sonar = HCSR04()
+ldr = LDR()
 lcd = LCD()
 buzzer = Buzzer()
 
@@ -64,9 +66,11 @@ while True:
     # Sensor logging elke POLL_INTERVAL seconden
     if time.ticks_diff(nu, laatste_sensor_log) >= POLL_INTERVAL * 1000:
         laatste_temp, laatste_vocht = dht11.lees()
-        print("Temp:", laatste_temp, "Vocht:", laatste_vocht)
+        licht = ldr.lees()
+        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
+        supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": licht})
         laatste_sensor_log = time.ticks_ms()
 
     # Commands verwerken elke 10 seconden

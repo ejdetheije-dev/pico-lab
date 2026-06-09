@@ -10,6 +10,7 @@ type Reading = {
 const SENSOR_META: Record<string, { label: string; unit: string }> = {
   dht11_temp: { label: 'Temperatuur', unit: ' °C' },
   dht11_humidity: { label: 'Luchtvochtigheid', unit: '%' },
+  ldr_light: { label: 'Licht', unit: '%' },
 }
 
 async function fetchLatest(): Promise<Record<string, Reading>> {
