@@ -5,6 +5,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
+from sensors.bmp180 import BMP180
 from output.lcd import LCD
 from output.buzzer import Buzzer
 
@@ -44,9 +45,16 @@ dht11 = DHT11()
 sonar = HCSR04()
 ldr = LDR()
 lcd = LCD()
+bmp180 = BMP180(lcd.i2c)
 buzzer = Buzzer()
 
-laatste_temp, laatste_vocht = dht11.lees()
+laatste_temp, laatste_vocht = 0, 0
+for _ in range(5):
+    try:
+        laatste_temp, laatste_vocht = dht11.lees()
+        break
+    except OSError:
+        time.sleep(2)
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
 
@@ -77,12 +85,21 @@ while True:
 
     # Sensor logging elke POLL_INTERVAL seconden
     if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
-        laatste_temp, laatste_vocht = dht11.lees()
+        try:
+            laatste_temp, laatste_vocht = dht11.lees()
+        except OSError:
+            time.sleep(2)
+            try:
+                laatste_temp, laatste_vocht = dht11.lees()
+            except OSError:
+                print("DHT11 fout, gebruik laatste waarde")
         licht = ldr.lees()
-        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht)
+        druk = round(bmp180.lees_druk(), 1)
+        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht, "Druk:", druk)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
         supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": licht})
+        supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": druk})
         laatste_sensor_log = time.ticks_ms()
 
     # Commands verwerken elke 10 seconden
