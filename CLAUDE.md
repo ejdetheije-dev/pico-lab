@@ -54,6 +54,17 @@ Stand per 2026-06-09:
   - Pico laadt settings bij opstart via `supabase.get_settings()`.
   - Pico herlaadt settings bij ontvangst van `set_setting` command.
   - `settings` tabel: kolommen `key`, `value`.
+- **BMP180 geïntegreerd in Nexus (2026-06-09):**
+  - GY-68 module (VIN/GND/SCL/SDA) werkt op I2C-adres 0x77.
+  - Deelt I2C-bus met LCD (0x27) op GPIO 0/1 — geen conflict.
+  - `sensors/bmp180.py` aangemaakt, logt `bmp180_pressure` (hPa) elke poll.
+  - Dashboard toont luchtdruk als vierde sensorkaart.
+  - DHT11 retry-logica toegevoegd in main.py (OSError ETIMEDOUT bij opstart).
+  - PICO-41 was geannuleerd wegens onduidelijke pinout — pinout nu bewezen: VIN/GND/SCL/SDA.
+- **Testscripts beschikbaar in `tools/`:**
+  - `test_gpio_loopback.py` — GPIO-loopback test voor nieuwe Pico (13 paren)
+  - `test_i2c_scan.py` — I2C-bus scan
+  - `test_bmp180.py` — BMP180 standalone test
 - **Volgende stappen:** PICO-42 (KY-038 woensdag 2026-06-11),
   PICO-43 (relaimodule + ventilator woensdag 2026-06-11).
 
