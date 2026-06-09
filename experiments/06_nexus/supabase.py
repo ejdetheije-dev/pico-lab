@@ -1,8 +1,15 @@
 import urequests
 import ujson
+import time
 from config import SUPABASE_URL, SUPABASE_KEY
 
-_headers = {
+_auth = {
+    "apikey": SUPABASE_KEY,
+    "Authorization": "Bearer " + SUPABASE_KEY,
+    "Connection": "close",
+}
+
+_write_headers = {
     "apikey": SUPABASE_KEY,
     "Authorization": "Bearer " + SUPABASE_KEY,
     "Content-Type": "application/json",
@@ -10,34 +17,55 @@ _headers = {
 }
 
 
+def _post(url, data):
+    """POST met één retry na 500ms bij ECONNRESET."""
+    for poging in range(2):
+        try:
+            r = urequests.post(url, headers=_write_headers, data=data)
+            r.close()
+            return
+        except OSError:
+            if poging == 0:
+                time.sleep_ms(500)
+            else:
+                raise
+
+
 def insert(table, data):
     """Voeg een rij in aan de opgegeven tabel."""
-    r = urequests.post(
-        SUPABASE_URL + "/rest/v1/" + table,
-        headers=_headers,
-        data=ujson.dumps(data),
-    )
-    r.close()
+    try:
+        _post(SUPABASE_URL + "/rest/v1/" + table, ujson.dumps(data))
+    except OSError as e:
+        print("insert fout:", table, e)
 
 
 def get_pending_commands():
     """Haal niet-uitgevoerde commands op (executed_at is null)."""
-    r = urequests.get(
-        SUPABASE_URL + "/rest/v1/commands?executed_at=is.null&order=id.asc",
-        headers=_headers,
-    )
-    result = r.json()
-    r.close()
-    return result
+    for poging in range(2):
+        try:
+            r = urequests.get(
+                SUPABASE_URL + "/rest/v1/commands?executed_at=is.null&order=id.asc",
+                headers=_auth,
+            )
+            result = r.json()
+            r.close()
+            return result
+        except OSError:
+            if poging == 0:
+                time.sleep_ms(500)
+            else:
+                print("get_pending_commands fout: twee pogingen mislukt")
+                return []
 
 
 def mark_executed(command_id):
     """Zet executed_at op het huidige tijdstip voor een command."""
-    headers = dict(_headers)
-    headers["Prefer"] = "return=minimal"
-    r = urequests.patch(
-        SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
-        headers=headers,
-        data=ujson.dumps({"executed_at": "now()"}),
-    )
-    r.close()
+    try:
+        r = urequests.patch(
+            SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
+            headers=_write_headers,
+            data=ujson.dumps({"executed_at": "now()"}),
+        )
+        r.close()
+    except OSError as e:
+        print("mark_executed fout:", e)

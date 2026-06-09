@@ -37,6 +37,7 @@ lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
 
 laatste_sensor_log = time.ticks_ms()
+laatste_command_poll = time.ticks_ms()
 beweging_actief = False
 laatste_beweging = time.ticks_ms()
 laatste_event = "-"
@@ -66,18 +67,20 @@ while True:
         print("Temp:", laatste_temp, "Vocht:", laatste_vocht)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
-        laatste_sensor_log = nu
+        laatste_sensor_log = time.ticks_ms()
 
-    # Commands verwerken
-    for cmd in supabase.get_pending_commands():
-        type_ = cmd.get("command")
-        payload = cmd.get("payload") or {}
-        if type_ == "display_message":
-            lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
-            time.sleep(3)
-        elif type_ == "buzzer":
-            buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
-        supabase.mark_executed(cmd["id"])
+    # Commands verwerken elke 10 seconden
+    if time.ticks_diff(nu, laatste_command_poll) >= 10000:
+        for cmd in supabase.get_pending_commands():
+            type_ = cmd.get("command")
+            payload = cmd.get("payload") or {}
+            if type_ == "display_message":
+                lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
+                time.sleep(3)
+            elif type_ == "buzzer":
+                buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
+            supabase.mark_executed(cmd["id"])
+        laatste_command_poll = time.ticks_ms()
 
     # LCD bijwerken
     lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", laatste_event)
