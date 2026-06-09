@@ -357,6 +357,47 @@ mpremote
 
 Reset na upload: `Ctrl-D` in de REPL (soft reset).
 
+## Toekomstige uitbreidingen
+
+### Nexus API-laag (Python backend + Node.js frontend)
+
+Doel: Nexus ontsluiten als platform zodat externe programma's sensordata
+kunnen consumeren en commando's kunnen sturen, zonder directe Supabase-toegang.
+
+**Architectuur:**
+```
+Pico → Supabase (data layer, blijft zoals nu)
+            ↕
+     FastAPI (Python backend)
+      - REST endpoints voor sensordata en commando's
+      - SSE stream voor real-time sensorupdates
+      - Supabase Realtime client draait hier
+            ↕
+     React (Node.js frontend)
+      - praat alleen met FastAPI, nooit direct met Supabase
+```
+
+**Geplande endpoints:**
+```
+GET  /sensors/latest     → laatste meting per sensor
+GET  /events             → recente events
+GET  /sensors/stream     → SSE stream, pushed bij elke nieuwe meting
+POST /commands/display   → tekst op LCD
+POST /commands/buzzer    → toon afspelen
+```
+
+**Verantwoordelijkheidsverdeling:**
+
+| Laag | Verantwoordelijkheid |
+|------|----------------------|
+| Supabase | Opslag, Pico-authenticatie, Realtime bron |
+| FastAPI | Businesslogica, auth voor externe clients, SSE doorsturen |
+| React | UI, geen directe DB-toegang meer |
+
+Externe Python-programma's (scripts, automaties) doen een `requests.post("/commands/buzzer")` — geen Supabase SDK nodig.
+
+---
+
 ## Codeerstijl
 
 - MicroPython, geen zware externe libraries. Alleen wat op de Pico past.
