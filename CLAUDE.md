@@ -383,6 +383,73 @@ experiments/NN_naam/
 `main.py` mag importeren uit `shared/`. Het uploadscript kopieert
 `shared/` automatisch mee.
 
+## Nexus printplaat — solderschema (PY-5CM×7CM perfboard)
+
+Pico en LCD zijn **niet** op de plaat — die hangen apart. De plaat bevat
+sensoren/actuatoren en twee module-headers. Pico sluit aan via pinheaders
+op rij A.
+
+### Componentenlijst op de plaat
+
+| Component | Type | Aansluiting |
+|-----------|------|-------------|
+| DHT11 | Direct gesoldeerd | 3 pins |
+| Passieve buzzer | Direct gesoldeerd | 2 pins |
+| LDR | Direct gesoldeerd | 2 benen |
+| 1kΩ weerstand | Direct gesoldeerd | 2 benen |
+| KY-038 header | 4-pins header | module hangt eraan |
+| HC-SR04 header | 4-pins header | module hangt eraan |
+
+### Lay-out (rijen A–R, kolommen 1–17)
+
+```
+     1    2    3    4    5    6    7    8    9
+A  [GND][3V3][VBU][G9 ][G16][G17][G18][G19][G26]  <- Pico headers
+B    .    .    .    .    .    .    .    .    .
+C    .    .    .    .    .    .    .    .    .
+D    .  [VCC][DAT][GND]  .    .  [ + ][ - ]  .    <- DHT11 + Buzzer
+E    .    .    .    .    .    .    .    .    .
+F    .    .    .    .    .    .    .    .    .
+G    .    .    .    .  [LDR]  .    .    .    .    <- LDR been 1 (3V3)
+H    .    .    .    .  [LDR]  .    .    .    .    <- LDR been 2
+I    .    .    .    .  [1kO]  .    .    .    .    <- 1kΩ been 1
+J    .    .    .    .  [1kO]  .    .    .    .    <- 1kΩ been 2 (GND)
+K    .    .    .    .    .    .    .    .    .
+L    .  [VCC][GND][D0 ][A0 ]  .    .    .    .    <- KY-038 header
+M    .    .    .    .    .    .    .    .    .
+N    .  [VCC][GND][TRG][ECH]  .    .    .    .    <- HC-SR04 header
+O    .    .    .    .    .    .    .    .    .
+P    .    .    .    .    .    .    .    .    .
+Q  [===][===][===][===][===][===][===][===][===]  <- GND-rail
+R  [===][===][===][===][===][===][===][===][===]  <- 3V3-rail
+```
+
+### Verbindingen achterkant (draadjes + soldeerbruggen)
+
+| # | Van | Naar | Opmerking |
+|---|-----|------|-----------|
+| 1 | A1 (GND) | Q1 | |
+| 2 | A2 (3V3) | R1 | |
+| 3 | A4 (G9) | D7 | Buzzer signaal |
+| 4 | A5 (G16) | D3 | DHT11 data |
+| 5 | A6 (G17) | N4 | HC-SR04 trigger |
+| 6 | A7 (G18) | N5 | HC-SR04 echo |
+| 7 | A8 (G19) | L4 | KY-038 D0 |
+| 8 | A9 (G26) | H5 | LDR midden-knoop |
+| 9 | D2 (DHT11 VCC) | R2 | |
+| 10 | D4 (DHT11 GND) | Q4 | |
+| 11 | D8 (Buzzer −) | Q7 | |
+| 12 | G5 (LDR been 1) | R5 | 3V3 zijde |
+| 13 | H5–I5 | soldeer­brug | LDR been 2 + 1kΩ been 1 |
+| 14 | J5 (1kΩ been 2) | Q5 | GND zijde |
+| 15 | L2 (KY-038 VCC) | R2 | |
+| 16 | L3 (KY-038 GND) | Q3 | |
+| 17 | N2 (HC-SR04 VCC) | R2 | |
+| 18 | N3 (HC-SR04 GND) | Q3 | |
+
+**Let op:** buzzer-pinafstand verschilt per model — controleer of D7/D8
+past of dat je de benen ombuigt.
+
 ## Veiligheidsregels
 
 - Servo-signaal komt van een Pico GPIO (3.3V PWM).
