@@ -8,9 +8,17 @@ from sensors.ldr import LDR
 from output.lcd import LCD
 from output.buzzer import Buzzer
 
-POLL_INTERVAL = 60
 BEWEGING_DREMPEL = 50
 AFWEZIG_NA = 30
+
+
+def laad_settings():
+    """Laad poll_interval_s en temp_alert_threshold uit Supabase. Geeft defaults bij fout."""
+    s = supabase.get_settings()
+    return {
+        "poll_interval_s": int(s.get("poll_interval_s", 60)),
+        "temp_alert_threshold": int(s.get("temp_alert_threshold", 30)),
+    }
 
 
 def verbind_wifi():
@@ -27,6 +35,10 @@ def verbind_wifi():
 
 
 verbind_wifi()
+
+settings = laad_settings()
+poll_interval = settings["poll_interval_s"]
+print("Settings geladen: poll_interval_s =", poll_interval)
 
 dht11 = DHT11()
 sonar = HCSR04()
@@ -64,7 +76,7 @@ while True:
                 supabase.insert("events", {"type": "motion_absent"})
 
     # Sensor logging elke POLL_INTERVAL seconden
-    if time.ticks_diff(nu, laatste_sensor_log) >= POLL_INTERVAL * 1000:
+    if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
         laatste_temp, laatste_vocht = dht11.lees()
         licht = ldr.lees()
         print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht)
@@ -83,6 +95,10 @@ while True:
                 time.sleep(3)
             elif type_ == "buzzer":
                 buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
+            elif type_ == "set_setting":
+                settings = laad_settings()
+                poll_interval = settings["poll_interval_s"]
+                print("Settings herladen: poll_interval_s =", poll_interval)
             supabase.mark_executed(cmd["id"])
         laatste_command_poll = time.ticks_ms()
 

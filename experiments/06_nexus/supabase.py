@@ -58,6 +58,25 @@ def get_pending_commands():
                 return []
 
 
+def get_settings():
+    """Haal settings op als dict {key: value}. Geeft lege dict bij fout."""
+    for poging in range(2):
+        try:
+            r = urequests.get(
+                SUPABASE_URL + "/rest/v1/settings?select=key,value",
+                headers=_auth,
+            )
+            rows = r.json()
+            r.close()
+            return {row["key"]: row["value"] for row in rows}
+        except OSError:
+            if poging == 0:
+                time.sleep_ms(500)
+            else:
+                print("get_settings fout: twee pogingen mislukt")
+                return {}
+
+
 def mark_executed(command_id):
     """Zet executed_at op het huidige tijdstip voor een command."""
     try:
