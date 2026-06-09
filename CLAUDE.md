@@ -450,6 +450,61 @@ R  [===][===][===][===][===][===][===][===][===]  <- 3V3-rail
 **Let op:** buzzer-pinafstand verschilt per model — controleer of D7/D8
 past of dat je de benen ombuigt.
 
+### Achterkant — soldeerpatroon
+
+```
+ACHTERKANT (zelfde richting als voorkant)
+
+      1    2    3    4    5    6    7    8    9
+ A    o----o----·----o----o----o----o----o----o
+      |    |         |    |    |    |         |
+      |    |    +----+    |    |    |    +----+
+      |    |    |    +----+----+----+    |
+ B    |    |    |    |    x    x         |
+      |    |    |    |    |    |         |
+ C    |    |    |    |    |    +---------+
+      |    |    |    |    |              |
+ D    ·    o----o----o    ·    ·    o----o    ·
+      |    |         |              |
+      |    |         |              |
+ E    |    |         |    ·    ·    |
+      |    |         |              |
+ F    |    |         |    ·    ·    |
+      |    |         |
+ G    |    |         |    o    ·    |
+      |    |         |    |         |
+ H    |    |         |    o==(brug) |
+      |    |         |       |      |
+ I    |    |         |    o==(brug) |
+      |    |         |    |
+ J    |    |         |    o    ·    ·
+      |    |         |    |
+ K    |    |         |    |    ·    ·
+      |    |    +----+    |
+ L    |    o----o    o----o    ·    ·
+      |    |         |    |
+ M    |    |    +----+    |
+      |    |    |         |
+ N    |    o----o    o----o    ·    ·
+      |    |         |    |
+ O    |    |         |    |
+      |    |         |    |
+ P    |    |         |    |
+      |    |         |    |
+ Q    o====o====o====o====o====·====o====o====·   GND-rail
+ R    o====o====·====·====o====·====·====·====·   3V3-rail
+```
+
+Legenda:
+- `o` = gesoldeerd pad
+- `|` `-` = draad (geïsoleerd)
+- `x` = kruising (draden raken elkaar NIET)
+- `==(brug)` = soldeer­brug H5-I5
+- `====` = doorlopende rail
+
+Kolom 2 loopt van A2 helemaal door naar R2 — verbindt in één draad:
+Pico 3V3 → DHT11 VCC → KY-038 VCC → HC-SR04 VCC → 3V3-rail.
+
 ## Veiligheidsregels
 
 - Servo-signaal komt van een Pico GPIO (3.3V PWM).
