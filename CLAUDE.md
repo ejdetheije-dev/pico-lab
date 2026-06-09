@@ -279,7 +279,7 @@ is de GND-rail.
 
 | Sensor               | Interface          | Aantal | Opmerking                          |
 |----------------------|--------------------|--------|------------------------------------|
-| JZK fotoresistor sensormodule | Digitaal (D0) + optioneel analoog (A0) | 5x | Drempel instelbaar via trimmer op module; ingebouwde pull-up weerstand — geen losse R nodig |
+| JZK fotoresistor sensormodule | Analoog (A0) + digitaal (D0) | 5x | A0 → GPIO 26 voor intensiteitsmeting (vervangt bare LDR + 1kΩ, weerstand zit op module); D0 voor drempeldetectie via trimmer |
 
 ### Actuatoren
 
