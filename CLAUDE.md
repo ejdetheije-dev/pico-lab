@@ -45,7 +45,16 @@ Stand per 2026-06-09:
     netwerkfuncties — loop crasht nooit meer bij netwerkstoringen.
   - Commands worden elke 10s gepollt i.p.v. elke seconde (was 60 HTTPS/min).
   - `laatste_sensor_log` update na inserts i.p.v. vóór — voorkomt rapid-fire logging.
-- **Volgende stappen:** PICO-37 (poll interval via website), PICO-42 (KY-038 woensdag 2026-06-11),
+- **LDR lichtmeting toegevoegd aan Nexus:**
+  - `sensors/ldr.py` aangemaakt, logt `ldr_light` (%) elke `poll_interval_s` seconden.
+  - Kalibratie op huidige opstelling: `min_raw=6000` (vinger), `max_raw=36000` (lamp).
+  - Dashboard toont lichtwaarde als derde sensorkaart.
+- **PICO-37 afgerond** (settings instelbaar via website):
+  - `Settings.tsx` toegevoegd: `poll_interval_s` en `temp_alert_threshold` instelbaar.
+  - Pico laadt settings bij opstart via `supabase.get_settings()`.
+  - Pico herlaadt settings bij ontvangst van `set_setting` command.
+  - `settings` tabel: kolommen `key`, `value`.
+- **Volgende stappen:** PICO-42 (KY-038 woensdag 2026-06-11),
   PICO-43 (relaimodule + ventilator woensdag 2026-06-11).
 
 ### Nieuwe hardware — beschikbaar en onderweg
@@ -64,6 +73,7 @@ Stand per 2026-06-09:
 | `commands` | `id`, `command` (niet `type`!), `payload`, `created_at`, `executed_at` |
 | `sensor_readings` | `id`, `sensor`, `value` (geen `created_at`) |
 | `events` | `id`, `type`, `payload` |
+| `settings` | `id`, `key`, `value` (`key` is uniek, UPSERT op conflict) |
 
 RLS is uitgeschakeld op alle tabellen — anon key heeft volledige toegang.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
@@ -162,7 +172,7 @@ bedienbaar is via een React-website. Kernpatroon:
 Het breadboard wordt **leeggemaakt** voordat dit experiment wordt opgebouwd.
 Experimenten 01 en 05 blijven in de repo maar zijn niet meer bedraad.
 
-### Voorgestelde mapstructuur (nog niet aangemaakt)
+### Mapstructuur
 
 ```
 experiments/06_nexus/
