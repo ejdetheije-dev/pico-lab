@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-09:
+Stand per 2026-06-11:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -65,17 +65,31 @@ Stand per 2026-06-09:
   - `test_gpio_loopback.py` — GPIO-loopback test voor nieuwe Pico (13 paren)
   - `test_i2c_scan.py` — I2C-bus scan
   - `test_bmp180.py` — BMP180 standalone test
-- **Volgende stappen:** PICO-42 (KY-038 woensdag 2026-06-11),
-  PICO-43 (relaimodule + ventilator woensdag 2026-06-11).
+- **PICO-42 geblokkeerd** (2026-06-11): twee KY-038 modules getest — beide
+  defect/te laag vermogen. AO-uitgang blijft op ~0.1V, DO triggert nooit.
+  **GPIO 28 (ADC2) is defect op deze Pico** — leest ~8400 bij directe 3V3
+  (correct: 65535). GPIO 27 (ADC1) werkt wel. KY-038 AO op GPIO 27.
+  2x MAX4466 besteld, arriveert 2026-06-12. PICO-42 hervat na ontvangst.
+- **PICO-43 hardware bewezen** (2026-06-11):
+  - 4-kanaals relaismodule (SONGLE SRD-05VDC), DC+ → 3V3 (niet VBUS).
+  - Jumpers S1–S4 op **H** (HIGH trigger) — 3V3 logica werkt dan correct.
+  - **Kanaal 1 beschadigd**: 12V raakte IN1 tijdens bedrading. Gebruik **kanaal 2**.
+  - IN2 → GPIO 21, relay HIGH = aan, LOW = uit.
+  - 12V adaptor: COM → 12V+, NO → ventilator+, 12V− → ventilator−.
+  - `output/relay.py` aangemaakt.
+  - GPIO 20 heeft slechte breadboard-contact — gebruik GPIO 21.
+- **Volgende stappen:** PICO-42 hervat na MAX4466 levering (2026-06-12),
+  PICO-43 relay integreren in Nexus main.py + website fan-commando.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
-- **BMP180** (al in huis): module reageert niet op I2C — pinout onduidelijk, overgeslagen. PICO-41 geannuleerd.
-- **KY-038 geluidssensor** (arriveert 2026-06-11): D0 → GPIO 19 (al gereserveerd),
-  drempel instelbaar via trimmer op module. Ticket: PICO-42.
-- **4-kanaals relaimodule + 12V adaptor + 12V ventilator** (arriveert 2026-06-11):
-  één relaiskanaal stuurt de ventilator, Pico GPIO stuurt relai aan. Maakt
-  afstandsbediening van 12V-apparaten mogelijk vanuit de website. Ticket: PICO-43.
+- **BMP180** (in huis, werkend): I2C-adres 0x77, deelt bus met LCD op GPIO 0/1.
+- **KY-038 geluidssensor** (2x, beide defect): AO blijft op ~0.1V, DO triggert nooit.
+  Vervangen door MAX4466 (arriveert 2026-06-12). AO → GPIO 27, DO → GPIO 19.
+- **4-kanaals relaismodule** (in huis): kanaal 1 beschadigd, kanaal 2 werkend.
+  IN2 → GPIO 21, DC+ → 3V3, jumpers op H. Ticket: PICO-43.
+- **12V adaptor + ventilator** (in huis): aangesloten op relaiskanaal 2, werkt.
+- **MAX4466 geluidssensor** (2x, arriveert 2026-06-12): vervangt KY-038. Ticket: PICO-42.
 
 ### Supabase kolomnamen (bewezen uit debug-sessie)
 
@@ -371,6 +385,15 @@ mpremote
 ```
 
 Reset na upload: `Ctrl-D` in de REPL (soft reset).
+
+Testscript uitvoeren (lokaal bestand direct op Pico runnen — GEEN cp nodig):
+
+```powershell
+mpremote run tools/test_mijn_script.py
+```
+
+**Let op:** `mpremote run` verwacht een **lokaal pad**. Nooit eerst `cp` doen
+en daarna `run` zonder pad — dat geeft "could not read file".
 
 ## Codeerstijl
 

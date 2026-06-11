@@ -134,6 +134,22 @@ Daarmee bewijs je dat je de patronen door hebt:
 - `shared/` voor herbruikbare stukken
 - README met hypothese + schema + waarnemingen
 
+## Relaismodule valkuilen (bewezen 2026-06-11)
+
+- **3V3 vs 5V logica:** SONGLE SRD-05VDC op 5V (VBUS) — 3V3 GPIO kan optocoupler
+  niet volledig afsnijden in LOW-trigger modus. Oplossing: DC+ op **3V3**, jumpers
+  op **H** (HIGH trigger). GPIO HIGH = relais aan, GPIO LOW = relais uit.
+- **12V op IN-pin:** dikke adaptordraad voorzichtig aansluiten. Als 12V per ongeluk
+  op een IN-klem komt, is die channel permanent beschadigd. Altijd 12V **losgekoppeld**
+  houden tijdens bedrading van de IN-pinnen.
+- **Zwevende IN-pinnen:** in LOW-trigger modus activeren zwevende IN-pinnen het relais
+  (trekt te veel stroom). Altijd alle ongebruikte IN-pinnen op VCC zetten of direct
+  aansturen.
+- **GPIO 20 slechte contact:** GPIO 20 op dit bord heeft slechte breadboard-contact.
+  Gebruik GPIO 21 als alternatief.
+- **GPIO 28 defect:** ADC2 (GPIO 28) leest ~8400 bij directe 3V3 — pin is beschadigd.
+  Gebruik GPIO 27 (ADC1) voor analoge sensoren.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`
