@@ -10,7 +10,7 @@ from machine import ADC, Pin
 class LDR:
     """Fotoresistor. Geeft lichtintensiteit 0-100 terug."""
 
-    def __init__(self, pin=26, min_raw=6000, max_raw=36000):
+    def __init__(self, pin=26, min_raw=4000, max_raw=34088):
         self.adc = ADC(Pin(pin))
         self.min_raw = min_raw
         self.max_raw = max_raw
