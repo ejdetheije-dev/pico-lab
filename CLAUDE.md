@@ -118,7 +118,16 @@ Stand per 2026-06-12:
   - Scherm 0 (4s): `23C 65% 1013h` / `Licht:72%`
   - Scherm 1 (4s): `Beweging: JA!/nee` / laatste event
   - LCD update alleen bij schermwissel of na nieuwe meting — geen onnodige I2C writes.
-- **Volgende stappen:** PICO-42 (MAX4466 geluidssensor), PICO-38 (IR bediening).
+- **PICO-42 afgerond** (2026-06-12): MAX4466 geluidssensor geïntegreerd.
+  - `sensors/sound.py`: piek-tot-piek amplitude over 50 samples (50ms), DREMPEL=7000.
+  - `verwerk_geluid()` helper aangeroepen in hoofdlus én tussen sensor-inserts.
+  - `time.sleep(1)` → `time.sleep_ms(100)` — geluidsdetectie runt 10x per seconde.
+  - `sound_detected` / `sound_absent` events gelogd met amplitude in payload.
+  - **Let op:** MAX4466 OUT moet op **GPIO 27** (niet GPIO 26 — dat is de LDR).
+    GPIO 26 en 27 op hetzelfde signaal = MAX4466 onderdrukt LDR-meting volledig.
+  - LDR kalibratie bijgewerkt: `min_raw=4000`, `max_raw=34088`.
+  - `tools/test_max4466.py`: kalibratiescript met amplitude live in terminal.
+- **Volgende stappen:** PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
@@ -128,7 +137,7 @@ Stand per 2026-06-12:
 - **4-kanaals relaismodule** (in huis, werkend): kanaal 1 beschadigd, kanaal 2 in gebruik.
   IN2 → GPIO 21, DC+ → 3V3, jumpers op H. PICO-43 afgerond.
 - **12V adaptor + ventilator** (in huis): aangesloten op relaiskanaal 2, werkt.
-- **MAX4466 geluidssensor** (2x, arriveert 2026-06-12): vervangt KY-038. Ticket: PICO-42.
+- **MAX4466 geluidssensor** (2x, in huis, werkend): GPIO 27 (ADC1). PICO-42 afgerond.
 
 ### Supabase kolomnamen (bewezen uit debug-sessie)
 

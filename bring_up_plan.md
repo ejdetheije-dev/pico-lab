@@ -207,6 +207,15 @@ real-time helemaal niet voor die tabel.
 - **Notificatie logging:** elke verstuurde notificatie staat als `pushover_sent` event
   in de `events` tabel — zichtbaar in Supabase dashboard.
 
+## MAX4466 valkuilen (bewezen 2026-06-12)
+
+- **GPIO-conflict LDR/geluid:** MAX4466 OUT op GPIO 26 onderdrukt de LDR volledig
+  (MAX4466 trekt pin naar VCC/2 ≈ 32800 raw = constant ~50%). Altijd GPIO 27 gebruiken.
+- **Drempel kalibreren:** ruisvloer ~5600–6400, zachte klap ~7000–8000, harde klap ~9000–10000.
+  Start met DREMPEL=7000. Verlaag naar 6800 bij te weinig gevoeligheid.
+- **Loop-snelheid:** `time.sleep(1)` geeft maar 4.5% kans een klap te vangen. Gebruik
+  `time.sleep_ms(100)` in de hoofdlus voor 10x hogere meetfrequentie.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`
