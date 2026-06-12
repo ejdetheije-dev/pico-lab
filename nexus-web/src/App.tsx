@@ -2,13 +2,15 @@ import { useState } from 'react'
 import Dashboard from './pages/Dashboard'
 import Commands from './pages/Commands'
 import Settings from './pages/Settings'
+import Grafieken from './pages/Grafieken'
 
-type Pagina = 'dashboard' | 'commands' | 'settings'
+type Pagina = 'dashboard' | 'grafieken' | 'commands' | 'settings'
 
 const NAV: { id: Pagina; label: string }[] = [
-  { id: 'dashboard', label: 'Dashboard' },
-  { id: 'commands', label: 'Commands' },
-  { id: 'settings', label: 'Settings' },
+  { id: 'dashboard',  label: 'Dashboard' },
+  { id: 'grafieken',  label: 'Grafieken' },
+  { id: 'commands',   label: 'Commands' },
+  { id: 'settings',   label: 'Settings' },
 ]
 
 export default function App() {
@@ -27,9 +29,10 @@ export default function App() {
           </button>
         ))}
       </nav>
-      {pagina === 'dashboard' && <Dashboard />}
-      {pagina === 'commands' && <Commands />}
-      {pagina === 'settings' && <Settings />}
+      {pagina === 'dashboard'  && <Dashboard />}
+      {pagina === 'grafieken'  && <Grafieken />}
+      {pagina === 'commands'   && <Commands />}
+      {pagina === 'settings'   && <Settings />}
     </div>
   )
 }
