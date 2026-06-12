@@ -8,6 +8,7 @@ from sensors.ldr import LDR
 from sensors.bmp180 import BMP180
 from output.lcd import LCD
 from output.buzzer import Buzzer
+from output.relay import Relay
 
 BEWEGING_DREMPEL = 50
 AFWEZIG_NA = 30
@@ -47,6 +48,7 @@ ldr = LDR()
 lcd = LCD()
 bmp180 = BMP180(lcd.i2c)
 buzzer = Buzzer()
+ventilator = Relay(21)
 
 laatste_temp, laatste_vocht = 0, 0
 for _ in range(5):
@@ -63,6 +65,34 @@ laatste_command_poll = time.ticks_ms()
 beweging_actief = False
 laatste_beweging = time.ticks_ms()
 laatste_event = "-"
+
+def verwerk_commands():
+    global laatste_command_poll, poll_interval, settings
+    if time.ticks_diff(time.ticks_ms(), laatste_command_poll) < 3000:
+        return
+    for cmd in supabase.get_pending_commands():
+        type_ = cmd.get("command")
+        payload = cmd.get("payload") or {}
+        if type_ == "display_message":
+            lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
+            time.sleep(3)
+        elif type_ == "buzzer":
+            buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
+        elif type_ == "fan_on":
+            ventilator.aan()
+            lcd.toon("Ventilator", "AAN")
+            time.sleep(2)
+        elif type_ == "fan_off":
+            ventilator.uit()
+            lcd.toon("Ventilator", "UIT")
+            time.sleep(2)
+        elif type_ == "set_setting":
+            settings = laad_settings()
+            poll_interval = settings["poll_interval_s"]
+            print("Settings herladen: poll_interval_s =", poll_interval)
+        supabase.mark_executed(cmd["id"])
+    laatste_command_poll = time.ticks_ms()
+
 
 while True:
     nu = time.ticks_ms()
@@ -97,27 +127,15 @@ while True:
         druk = round(bmp180.lees_druk(), 1)
         print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht, "Druk:", druk)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
+        verwerk_commands()
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
+        verwerk_commands()
         supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": licht})
+        verwerk_commands()
         supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": druk})
         laatste_sensor_log = time.ticks_ms()
 
-    # Commands verwerken elke 10 seconden
-    if time.ticks_diff(nu, laatste_command_poll) >= 10000:
-        for cmd in supabase.get_pending_commands():
-            type_ = cmd.get("command")
-            payload = cmd.get("payload") or {}
-            if type_ == "display_message":
-                lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
-                time.sleep(3)
-            elif type_ == "buzzer":
-                buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
-            elif type_ == "set_setting":
-                settings = laad_settings()
-                poll_interval = settings["poll_interval_s"]
-                print("Settings herladen: poll_interval_s =", poll_interval)
-            supabase.mark_executed(cmd["id"])
-        laatste_command_poll = time.ticks_ms()
+    verwerk_commands()
 
     # LCD bijwerken
     lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", laatste_event)
