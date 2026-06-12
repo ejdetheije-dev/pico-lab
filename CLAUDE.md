@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-11:
+Stand per 2026-06-12:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -65,12 +65,13 @@ Stand per 2026-06-11:
   - `test_gpio_loopback.py` — GPIO-loopback test voor nieuwe Pico (13 paren)
   - `test_i2c_scan.py` — I2C-bus scan
   - `test_bmp180.py` — BMP180 standalone test
+- **PICO-39 afgerond** (2026-06-12): BMP180 drukmeting bewezen en geïntegreerd in Nexus.
 - **PICO-42 geblokkeerd** (2026-06-11): twee KY-038 modules getest — beide
   defect/te laag vermogen. AO-uitgang blijft op ~0.1V, DO triggert nooit.
   **GPIO 28 (ADC2) is defect op deze Pico** — leest ~8400 bij directe 3V3
   (correct: 65535). GPIO 27 (ADC1) werkt wel. KY-038 AO op GPIO 27.
   2x MAX4466 besteld, arriveert 2026-06-12. PICO-42 hervat na ontvangst.
-- **PICO-43 hardware bewezen** (2026-06-11):
+- **PICO-43 afgerond** (2026-06-12):
   - 4-kanaals relaismodule (SONGLE SRD-05VDC), DC+ → 3V3 (niet VBUS).
   - Jumpers S1–S4 op **H** (HIGH trigger) — 3V3 logica werkt dan correct.
   - **Kanaal 1 beschadigd**: 12V raakte IN1 tijdens bedrading. Gebruik **kanaal 2**.
@@ -78,16 +79,25 @@ Stand per 2026-06-11:
   - 12V adaptor: COM → 12V+, NO → ventilator+, 12V− → ventilator−.
   - `output/relay.py` aangemaakt.
   - GPIO 20 heeft slechte breadboard-contact — gebruik GPIO 21.
+  - `fan_on` / `fan_off` commands in `main.py` en Commands-pagina.
+  - `tools/test_nexus_all.py` test alle 6 componenten inclusief gemeten waarden.
+- **Command-responsiviteit verbeterd (2026-06-12):**
+  - Vier sensor-inserts blokkeerden de loop elk ~10s → commands kwamen 40s te laat.
+  - Oplossing: `verwerk_commands()` helper aangeroepen *tussen* elke sensor-insert
+    met verse `time.ticks_ms()` — commands reageren nu binnen ~3s.
+- **Commands UI verbeterd (2026-06-12):**
+  - Per-knop `useCommand()` hook — knoppen bevriezen niet meer samen.
+  - `ActionButton` component: `scale-95` + kleurflits + "Verstuurd" label bij succes.
 - **Volgende stappen:** PICO-42 hervat na MAX4466 levering (2026-06-12),
-  PICO-43 relay integreren in Nexus main.py + website fan-commando.
+  PICO-40 (grafieken + event log op website), PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
 - **BMP180** (in huis, werkend): I2C-adres 0x77, deelt bus met LCD op GPIO 0/1.
 - **KY-038 geluidssensor** (2x, beide defect): AO blijft op ~0.1V, DO triggert nooit.
   Vervangen door MAX4466 (arriveert 2026-06-12). AO → GPIO 27, DO → GPIO 19.
-- **4-kanaals relaismodule** (in huis): kanaal 1 beschadigd, kanaal 2 werkend.
-  IN2 → GPIO 21, DC+ → 3V3, jumpers op H. Ticket: PICO-43.
+- **4-kanaals relaismodule** (in huis, werkend): kanaal 1 beschadigd, kanaal 2 in gebruik.
+  IN2 → GPIO 21, DC+ → 3V3, jumpers op H. PICO-43 afgerond.
 - **12V adaptor + ventilator** (in huis): aangesloten op relaiskanaal 2, werkt.
 - **MAX4466 geluidssensor** (2x, arriveert 2026-06-12): vervangt KY-038. Ticket: PICO-42.
 

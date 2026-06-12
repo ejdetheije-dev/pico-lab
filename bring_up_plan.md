@@ -150,6 +150,35 @@ Daarmee bewijs je dat je de patronen door hebt:
 - **GPIO 28 defect:** ADC2 (GPIO 28) leest ~8400 bij directe 3V3 — pin is beschadigd.
   Gebruik GPIO 27 (ADC1) voor analoge sensoren.
 
+## Command-responsiviteit in de hoofdloop (bewezen 2026-06-12)
+
+Wanneer de loop meerdere blokkerende HTTPS-calls achter elkaar doet (bijv. vier
+sensor-inserts van elk ~10s), komen commands tot 40s te laat aan.
+
+**Oplossing:** extraheer command-polling in een aparte functie en roep die aan
+*tussen* elke blokkerende operatie, met verse `time.ticks_ms()`:
+
+```python
+def verwerk_commands():
+    global laatste_command_poll
+    if time.ticks_diff(time.ticks_ms(), laatste_command_poll) < 3000:
+        return
+    for cmd in supabase.get_pending_commands():
+        # ...verwerk...
+        supabase.mark_executed(cmd["id"])
+    laatste_command_poll = time.ticks_ms()
+
+# In sensor-logging blok:
+supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": temp})
+verwerk_commands()
+supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": licht})
+verwerk_commands()
+# ... etc.
+```
+
+De `3000ms` guard voorkomt dat `verwerk_commands()` bij elke insert een echte
+poll doet — alleen als er 3s verstreken zijn.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`
