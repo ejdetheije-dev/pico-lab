@@ -179,6 +179,19 @@ verwerk_commands()
 De `3000ms` guard voorkomt dat `verwerk_commands()` bij elke insert een echte
 poll doet — alleen als er 3s verstreken zijn.
 
+## Pushover integratie valkuilen (bewezen 2026-06-12)
+
+- **`config.py` wordt niet geüpload door `upload.ps1`** — altijd apart uploaden:
+  ```powershell
+  mpremote cp experiments\06_nexus\config.py :config.py
+  ```
+- **Toggle-knob buiten de balk:** gebruik `inline-flex items-center` op de track
+  en `inline-block` op de knop — geen `absolute` positionering of `overflow-hidden`.
+- **Standaard uitgeschakeld:** `pushover_enabled` default is `"false"`. Gebruiker
+  moet expliciet aanzetten via Settings → Opslaan. Pico herlaadt na `set_setting` command.
+- **Notificatie logging:** elke verstuurde notificatie staat als `pushover_sent` event
+  in de `events` tabel — zichtbaar in Supabase dashboard.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`

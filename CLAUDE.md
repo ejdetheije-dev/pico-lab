@@ -88,8 +88,25 @@ Stand per 2026-06-12:
 - **Commands UI verbeterd (2026-06-12):**
   - Per-knop `useCommand()` hook — knoppen bevriezen niet meer samen.
   - `ActionButton` component: `scale-95` + kleurflits + "Verstuurd" label bij succes.
-- **Volgende stappen:** PICO-42 hervat na MAX4466 levering (2026-06-12),
-  PICO-40 (grafieken + event log op website), PICO-38 (IR bediening).
+- **PICO-44 afgerond** (2026-06-12): Pushover notificaties als output kanaal.
+  - `output/pushover.py` aangemaakt: HTTP POST naar `api.pushover.net/1/messages.json`.
+  - Triggers: `motion_detected` event en temperatuurdrempel overschrijding (eenmalig).
+  - `notify` command: website kan vrij bericht sturen via Supabase.
+  - Elke verzonden notificatie wordt gelogd als `pushover_sent` event in Supabase.
+  - `pushover_enabled` setting: toggle op Settings-pagina, standaard **uit**.
+  - Credentials in `config.py`: `PUSHOVER_TOKEN`, `PUSHOVER_USER`.
+- **Code review uitgevoerd (2026-06-12):** vier bugs gefixed:
+  - `hcsr04.py`: `start`/`end` buiten while-lussen (waren mogelijk undefined).
+  - `supabase.py`: socket-lek bij JSON-fout — `r.content` voor `r.close()`.
+  - `supabase.py`: `"now()"` → `"now"` als geldige PostgreSQL timestamp keyword.
+  - `main.py`: DHT11 retry vangt nu ook checksum errors (`Exception` i.p.v. `OSError`).
+- **Testpiramide toegevoegd (2026-06-12):**
+  - `tools/test_nexus_module.py` — module tests (laag 1, geen WiFi)
+  - `tools/test_nexus_integratie.py` — integratie tests (laag 2, geen WiFi)
+  - `tools/test_nexus_keten.py` — keten tests (laag 3, WiFi + Supabase)
+  - `tools/test_nexus_master.py` — master runner, alle lagen achter elkaar
+- **Volgende stappen:** PICO-42 (MAX4466 geluidssensor), PICO-40 (grafieken +
+  event log op website), PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
