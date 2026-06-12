@@ -7,9 +7,10 @@ import { supabase } from '../lib/supabase'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
-type Punt = { nr: number; waarde: number }
+type Punt = { ts: number; waarde: number; label: string }
 type Event = { id: number; type: string; payload: Record<string, unknown> }
 type SensorConf = { sensor: string; label: string; unit: string; kleur: string }
+type Limiet = 50 | 100 | 1000
 
 // ── config ────────────────────────────────────────────────────────────────────
 
@@ -27,17 +28,42 @@ const EVENT_FILTERS = [
   { value: 'pushover_sent',   label: 'Pushover' },
 ]
 
+const LIMIETEN: Limiet[] = [50, 100, 1000]
+
+// ── helpers ───────────────────────────────────────────────────────────────────
+
+function formatTick(ts: number, bereik: number): string {
+  const d = new Date(ts)
+  const dag = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  const tijd = d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+  return bereik > 86_400_000 ? `${dag} ${tijd}` : tijd
+}
+
+function formatTooltip(ts: number): string {
+  return new Date(ts).toLocaleString('nl-NL', {
+    day: 'numeric', month: 'short',
+    hour: '2-digit', minute: '2-digit', second: '2-digit',
+  })
+}
+
 // ── data fetchers ─────────────────────────────────────────────────────────────
 
-async function fetchHistorie(sensor: string): Promise<Punt[]> {
+async function fetchHistorie(sensor: string, limiet: Limiet): Promise<Punt[]> {
   const { data } = await supabase
     .from('sensor_readings')
-    .select('id, value')
+    .select('value, created_at')
     .eq('sensor', sensor)
-    .order('id', { ascending: false })
-    .limit(50)
+    .order('created_at', { ascending: false })
+    .limit(limiet)
   if (!data) return []
-  return data.reverse().map((r, i) => ({ nr: i + 1, waarde: r.value }))
+  return data
+    .filter(r => r.created_at)
+    .reverse()
+    .map(r => ({
+      ts: new Date(r.created_at).getTime(),
+      waarde: r.value,
+      label: r.created_at,
+    }))
 }
 
 async function fetchEvents(filter: string): Promise<Event[]> {
@@ -53,14 +79,17 @@ async function fetchEvents(filter: string): Promise<Event[]> {
 
 // ── sub-components ────────────────────────────────────────────────────────────
 
-function SensorGrafiek({ sensor, label, unit, kleur }: SensorConf) {
+function SensorGrafiek({ sensor, label, unit, kleur, limiet }: SensorConf & { limiet: Limiet }) {
   const [data, setData] = useState<Punt[]>([])
 
   useEffect(() => {
-    fetchHistorie(sensor).then(setData)
-    const t = setInterval(() => fetchHistorie(sensor).then(setData), 30_000)
+    fetchHistorie(sensor, limiet).then(setData)
+    const t = setInterval(() => fetchHistorie(sensor, limiet).then(setData), 30_000)
     return () => clearInterval(t)
-  }, [sensor])
+  }, [sensor, limiet])
+
+  const bereik = data.length >= 2 ? data[data.length - 1].ts - data[0].ts : 0
+  const tickInterval = Math.max(0, Math.floor(data.length / 8) - 1)
 
   return (
     <div className="bg-gray-900 rounded-xl p-4 flex flex-col gap-2">
@@ -68,15 +97,23 @@ function SensorGrafiek({ sensor, label, unit, kleur }: SensorConf) {
       {data.length === 0 ? (
         <span className="text-xs text-gray-600 py-8 text-center">Geen data</span>
       ) : (
-        <ResponsiveContainer width="100%" height={140}>
+        <ResponsiveContainer width="100%" height={160}>
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
             <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
-            <XAxis dataKey="nr" tick={{ fontSize: 10, fill: '#9ca3af' }} interval="preserveStartEnd" />
+            <XAxis
+              dataKey="ts"
+              type="number"
+              scale="time"
+              domain={['dataMin', 'dataMax']}
+              tickFormatter={ts => formatTick(ts, bereik)}
+              tick={{ fontSize: 9, fill: '#9ca3af' }}
+              interval={tickInterval}
+            />
             <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} />
             <Tooltip
               contentStyle={{ background: '#111827', border: 'none', fontSize: 12 }}
               formatter={(v) => [`${Number(v)} ${unit}`, label]}
-              labelFormatter={(n) => `meting ${n}`}
+              labelFormatter={ts => formatTooltip(Number(ts))}
             />
             <Line
               type="monotone"
@@ -99,9 +136,8 @@ function EventTypeLabel({ type }: { type: string }) {
     motion_absent:   'bg-gray-500',
     pushover_sent:   'bg-blue-500',
   }
-  const kleur = kleuren[type] ?? 'bg-gray-600'
   return (
-    <span className={`text-xs px-2 py-0.5 rounded-full text-white ${kleur}`}>
+    <span className={`text-xs px-2 py-0.5 rounded-full text-white ${kleuren[type] ?? 'bg-gray-600'}`}>
       {type}
     </span>
   )
@@ -110,6 +146,7 @@ function EventTypeLabel({ type }: { type: string }) {
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function Grafieken() {
+  const [limiet, setLimiet] = useState<Limiet>(50)
   const [filter, setFilter] = useState('')
   const [events, setEvents] = useState<Event[]>([])
 
@@ -123,9 +160,28 @@ export default function Grafieken() {
     <div className="min-h-screen bg-gray-950 text-white p-8 flex flex-col gap-8">
 
       <section>
-        <h2 className="text-lg font-semibold mb-4">Grafieken</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-lg font-semibold">Grafieken</h2>
+          <div className="flex gap-1">
+            {LIMIETEN.map(l => (
+              <button
+                key={l}
+                onClick={() => setLimiet(l)}
+                className={`text-xs px-3 py-1 rounded-full border transition-colors ${
+                  limiet === l
+                    ? 'bg-blue-600 border-blue-600 text-white'
+                    : 'border-gray-600 text-gray-400 hover:text-white'
+                }`}
+              >
+                {l}
+              </button>
+            ))}
+          </div>
+        </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          {SENSOREN.map(s => <SensorGrafiek key={s.sensor} {...s} />)}
+          {SENSOREN.map(s => (
+            <SensorGrafiek key={s.sensor} {...s} limiet={limiet} />
+          ))}
         </div>
       </section>
 
@@ -154,9 +210,7 @@ export default function Grafieken() {
             <div key={e.id} className="bg-gray-900 rounded-lg px-4 py-3 flex items-start gap-3">
               <EventTypeLabel type={e.type} />
               <span className="text-xs text-gray-400 font-mono break-all">
-                {Object.keys(e.payload ?? {}).length > 0
-                  ? JSON.stringify(e.payload)
-                  : '—'}
+                {Object.keys(e.payload ?? {}).length > 0 ? JSON.stringify(e.payload) : '—'}
               </span>
             </div>
           ))}
