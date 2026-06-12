@@ -120,7 +120,7 @@ try:
     nog_open = [c for c in cmds_na if c.get("id") == cmd_id]
     assert len(nog_open) == 0, f"command {cmd_id} nog steeds pending na mark_executed"
 
-    ok("Command lifecycle", f"id={cmd_id} insert→ophalen→mark_executed")
+    ok("Command lifecycle", f"id={cmd_id} insert->ophalen->mark_executed")
 except Exception as e:
     fail("Command lifecycle", str(e))
 

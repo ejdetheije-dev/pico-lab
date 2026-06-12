@@ -129,7 +129,7 @@ try:
     time.sleep_ms(200)
     rel.uit(); laag = rel.waarde() == 0
     ok = start_laag and hoog and laag
-    check("Relay.aan()/uit()", ok, "GPIO 21 init→hoog→laag")
+    check("Relay.aan()/uit()", ok, "GPIO 21 init->hoog->laag")
     if ok: laag1_ok += 1
     else:  laag1_fail += 1
 except Exception as e:
@@ -288,7 +288,7 @@ if wifi_ok:
         cmds_na = supabase.get_pending_commands()
         nog_open = [c for c in cmds_na if c.get("id") == cmd_id]
         ok = len(nog_open) == 0
-        check("Command lifecycle", ok, f"id={cmd_id} insert→pending→mark_executed")
+        check("Command lifecycle", ok, f"id={cmd_id} insert->pending->mark_executed")
         if ok: laag3_ok += 1
         else:  laag3_fail += 1
     except Exception as e:
