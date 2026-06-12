@@ -105,8 +105,20 @@ Stand per 2026-06-12:
   - `tools/test_nexus_integratie.py` — integratie tests (laag 2, geen WiFi)
   - `tools/test_nexus_keten.py` — keten tests (laag 3, WiFi + Supabase)
   - `tools/test_nexus_master.py` — master runner, alle lagen achter elkaar
-- **Volgende stappen:** PICO-42 (MAX4466 geluidssensor), PICO-40 (grafieken +
-  event log op website), PICO-38 (IR bediening).
+- **PICO-40 afgerond** (2026-06-12): Grafieken + event log op website.
+  - `nexus-web/src/pages/Grafieken.tsx`: vier lijngrafieken (temp, vocht, licht, druk).
+  - Supabase real-time subscriptions via `postgres_changes` — updates direct bij insert.
+  - Vereist in Supabase SQL: `ALTER TABLE sensor_readings REPLICA IDENTITY FULL`,
+    idem voor `events`, plus `ALTER PUBLICATION supabase_realtime ADD TABLE ...`.
+  - Y-as per sensor instelbaar: temperatuur `[min(0, data), auto]`, overige `auto/auto`.
+  - Limietknoppen: 50 / 100 / 1000 / 50000 meetpunten.
+  - Event log met filterknopen: Alles / Beweging / Geen beweging / Pushover.
+  - `sensor_readings` tabel uitgebreid met `created_at timestamptz DEFAULT now()`.
+- **LCD roterende weergave (2026-06-12):**
+  - Scherm 0 (4s): `23C 65% 1013h` / `Licht:72%`
+  - Scherm 1 (4s): `Beweging: JA!/nee` / laatste event
+  - LCD update alleen bij schermwissel of na nieuwe meting — geen onnodige I2C writes.
+- **Volgende stappen:** PICO-42 (MAX4466 geluidssensor), PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
@@ -123,7 +135,7 @@ Stand per 2026-06-12:
 | Tabel | Kolommen |
 |-------|----------|
 | `commands` | `id`, `command` (niet `type`!), `payload`, `created_at`, `executed_at` |
-| `sensor_readings` | `id`, `sensor`, `value` (geen `created_at`) |
+| `sensor_readings` | `id`, `sensor`, `value`, `created_at` (timestamptz, DEFAULT now()) |
 | `events` | `id`, `type`, `payload` |
 | `settings` | `id`, `key`, `value` (`key` is uniek, UPSERT op conflict) |
 

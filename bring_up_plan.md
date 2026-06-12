@@ -179,6 +179,21 @@ verwerk_commands()
 De `3000ms` guard voorkomt dat `verwerk_commands()` bij elke insert een echte
 poll doet — alleen als er 3s verstreken zijn.
 
+## Grafieken real-time setup (bewezen 2026-06-12)
+
+Supabase real-time werkt niet zonder deze twee SQL-statements in de SQL Editor:
+
+```sql
+ALTER TABLE sensor_readings REPLICA IDENTITY FULL;
+ALTER TABLE events REPLICA IDENTITY FULL;
+ALTER PUBLICATION supabase_realtime ADD TABLE sensor_readings;
+ALTER PUBLICATION supabase_realtime ADD TABLE events;
+```
+
+Zonder `REPLICA IDENTITY FULL` ontvangen kolom-gefilterde subscriptions
+(`filter: 'sensor=eq.dht11_temp'`) geen events. Zonder `ADD TABLE` werkt
+real-time helemaal niet voor die tabel.
+
 ## Pushover integratie valkuilen (bewezen 2026-06-12)
 
 - **`config.py` wordt niet geüpload door `upload.ps1`** — altijd apart uploaden:
