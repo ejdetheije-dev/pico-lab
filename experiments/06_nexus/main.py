@@ -76,6 +76,29 @@ temp_alert_actief = False
 geluid_actief = False
 lcd_scherm = 0
 
+def verwerk_beweging():
+    global beweging_actief, laatste_beweging, laatste_event
+    nu = time.ticks_ms()
+    afstand = sonar.meet_afstand()
+    if afstand is None:
+        return
+    if afstand < BEWEGING_DREMPEL and not beweging_actief:
+        beweging_actief = True
+        laatste_beweging = nu
+        laatste_event = "Beweging!"
+        print("Event: motion_detected, afstand:", round(afstand, 1))
+        supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
+        if settings["pushover_enabled"]:
+            if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
+                supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
+    elif afstand >= BEWEGING_DREMPEL and beweging_actief:
+        if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
+            beweging_actief = False
+            laatste_event = "Geen beweging"
+            print("Event: motion_absent")
+            supabase.insert("events", {"type": "motion_absent"})
+
+
 def verwerk_geluid():
     global geluid_actief, laatste_event
     amplitude = geluid.meet_amplitude()
@@ -127,25 +150,7 @@ def verwerk_commands():
 while True:
     nu = time.ticks_ms()
 
-    # Bewegingsdetectie
-    afstand = sonar.meet_afstand()
-    if afstand is not None:
-        if afstand < BEWEGING_DREMPEL and not beweging_actief:
-            beweging_actief = True
-            laatste_beweging = nu
-            laatste_event = "Beweging!"
-            print("Event: motion_detected, afstand:", round(afstand, 1))
-            supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
-            if settings["pushover_enabled"]:
-                if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
-                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
-        elif afstand >= BEWEGING_DREMPEL and beweging_actief:
-            if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
-                beweging_actief = False
-                laatste_event = "Geen beweging"
-                print("Event: motion_absent")
-                supabase.insert("events", {"type": "motion_absent"})
-
+    verwerk_beweging()
     verwerk_geluid()
 
     # Sensor logging elke POLL_INTERVAL seconden
@@ -163,12 +168,15 @@ while True:
         print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht, "Druk:", laatste_druk)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         verwerk_commands()
+        verwerk_beweging()
         verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
         verwerk_commands()
+        verwerk_beweging()
         verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
         verwerk_commands()
+        verwerk_beweging()
         verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": laatste_druk})
         laatste_sensor_log = time.ticks_ms()
