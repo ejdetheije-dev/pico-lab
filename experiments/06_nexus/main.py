@@ -6,6 +6,7 @@ from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
 from sensors.bmp180 import BMP180
+from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
 from output.relay import Relay
@@ -47,6 +48,7 @@ print("Settings geladen: poll_interval_s =", poll_interval)
 dht11 = DHT11()
 sonar = HCSR04()
 ldr = LDR()
+geluid = Sound()
 lcd = LCD()
 bmp180 = BMP180(lcd.i2c)
 buzzer = Buzzer()
@@ -71,7 +73,23 @@ beweging_actief = False
 laatste_beweging = time.ticks_ms()
 laatste_event = "-"
 temp_alert_actief = False
+geluid_actief = False
 lcd_scherm = 0
+
+def verwerk_geluid():
+    global geluid_actief, laatste_event
+    amplitude = geluid.meet_amplitude()
+    if amplitude > GELUID_DREMPEL and not geluid_actief:
+        geluid_actief = True
+        laatste_event = "Geluid!"
+        print("Event: sound_detected, amplitude:", amplitude)
+        supabase.insert("events", {"type": "sound_detected", "payload": {"amplitude": amplitude}})
+    elif amplitude <= GELUID_DREMPEL and geluid_actief:
+        geluid_actief = False
+        laatste_event = "Geen geluid"
+        print("Event: sound_absent")
+        supabase.insert("events", {"type": "sound_absent"})
+
 
 def verwerk_commands():
     global laatste_command_poll, poll_interval, settings
@@ -128,6 +146,8 @@ while True:
                 print("Event: motion_absent")
                 supabase.insert("events", {"type": "motion_absent"})
 
+    verwerk_geluid()
+
     # Sensor logging elke POLL_INTERVAL seconden
     if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
         try:
@@ -143,10 +163,13 @@ while True:
         print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht, "Druk:", laatste_druk)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         verwerk_commands()
+        verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
         verwerk_commands()
+        verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
         verwerk_commands()
+        verwerk_geluid()
         supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": laatste_druk})
         laatste_sensor_log = time.ticks_ms()
         laatste_lcd_update = 0  # forceer direct LCD refresh
@@ -176,4 +199,4 @@ while True:
         lcd_scherm = 1 - lcd_scherm
         laatste_lcd_update = time.ticks_ms()
 
-    time.sleep(1)
+    time.sleep_ms(100)
