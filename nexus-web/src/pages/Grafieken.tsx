@@ -7,15 +7,16 @@ import { supabase } from '../lib/supabase'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
-type Punt = { ts: number; waarde: number; label: string }
+type Punt = { ts: number; waarde: number }
 type Event = { id: number; type: string; payload: Record<string, unknown> }
-type SensorConf = { sensor: string; label: string; unit: string; kleur: string }
+type Domain = [(d: number) => number, string] | [number | string, number | string]
+type SensorConf = { sensor: string; label: string; unit: string; kleur: string; domain?: Domain }
 type Limiet = 50 | 100 | 1000 | 50000
 
 // ── config ────────────────────────────────────────────────────────────────────
 
 const SENSOREN: SensorConf[] = [
-  { sensor: 'dht11_temp',      label: 'Temperatuur',      unit: '°C',  kleur: '#f97316' },
+  { sensor: 'dht11_temp',      label: 'Temperatuur',      unit: '°C',  kleur: '#f97316', domain: [(d: number) => Math.min(0, d), 'auto'] },
   { sensor: 'dht11_humidity',  label: 'Luchtvochtigheid', unit: '%',   kleur: '#3b82f6' },
   { sensor: 'ldr_light',       label: 'Licht',            unit: '%',   kleur: '#eab308' },
   { sensor: 'bmp180_pressure', label: 'Luchtdruk',        unit: 'hPa', kleur: '#8b5cf6' },
@@ -53,17 +54,14 @@ async function fetchHistorie(sensor: string, limiet: Limiet): Promise<Punt[]> {
     .from('sensor_readings')
     .select('value, created_at')
     .eq('sensor', sensor)
+    .not('created_at', 'is', null)
     .order('created_at', { ascending: false })
     .limit(limiet)
   if (!data) return []
-  return data
-    .filter(r => r.created_at)
-    .reverse()
-    .map(r => ({
-      ts: new Date(r.created_at).getTime(),
-      waarde: r.value,
-      label: r.created_at,
-    }))
+  return data.reverse().map(r => ({
+    ts: new Date(r.created_at).getTime(),
+    waarde: r.value,
+  }))
 }
 
 async function fetchEvents(filter: string): Promise<Event[]> {
@@ -71,21 +69,31 @@ async function fetchEvents(filter: string): Promise<Event[]> {
     .from('events')
     .select('id, type, payload')
     .order('id', { ascending: false })
-    .limit(30)
+    .limit(50)
   if (filter) query = query.eq('type', filter)
   const { data } = await query
   return (data ?? []) as Event[]
 }
 
-// ── sub-components ────────────────────────────────────────────────────────────
+// ── SensorGrafiek ─────────────────────────────────────────────────────────────
 
-function SensorGrafiek({ sensor, label, unit, kleur, limiet }: SensorConf & { limiet: Limiet }) {
+function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', 'auto'] }: SensorConf & { limiet: Limiet }) {
   const [data, setData] = useState<Punt[]>([])
 
   useEffect(() => {
     fetchHistorie(sensor, limiet).then(setData)
-    const t = setInterval(() => fetchHistorie(sensor, limiet).then(setData), 30_000)
-    return () => clearInterval(t)
+
+    // real-time: herlaad bij elke nieuwe INSERT voor dit sensortype
+    const channel = supabase
+      .channel(`sensor-${sensor}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'sensor_readings', filter: `sensor=eq.${sensor}` },
+        () => fetchHistorie(sensor, limiet).then(setData),
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
   }, [sensor, limiet])
 
   const bereik = data.length >= 2 ? data[data.length - 1].ts - data[0].ts : 0
@@ -109,7 +117,7 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet }: SensorConf & { li
               tick={{ fontSize: 9, fill: '#9ca3af' }}
               interval={tickInterval}
             />
-            <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} />
+            <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} domain={domain} />
             <Tooltip
               contentStyle={{ background: '#111827', border: 'none', fontSize: 12 }}
               formatter={(v) => [`${Number(v)} ${unit}`, label]}
@@ -130,6 +138,8 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet }: SensorConf & { li
   )
 }
 
+// ── EventLog ──────────────────────────────────────────────────────────────────
+
 function EventTypeLabel({ type }: { type: string }) {
   const kleuren: Record<string, string> = {
     motion_detected: 'bg-orange-500',
@@ -143,18 +153,47 @@ function EventTypeLabel({ type }: { type: string }) {
   )
 }
 
+function EventLog({ filter }: { filter: string }) {
+  const [events, setEvents] = useState<Event[]>([])
+
+  useEffect(() => {
+    fetchEvents(filter).then(setEvents)
+
+    // real-time: voeg nieuwe event direct toe bovenaan
+    const channel = supabase
+      .channel(`events-changes-${filter || 'all'}`)
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'events' },
+        () => fetchEvents(filter).then(setEvents),
+      )
+      .subscribe()
+
+    return () => { supabase.removeChannel(channel) }
+  }, [filter])
+
+  return (
+    <div className="flex flex-col gap-2">
+      {events.length === 0 && (
+        <p className="text-sm text-gray-600">Geen events gevonden.</p>
+      )}
+      {events.map(e => (
+        <div key={e.id} className="bg-gray-900 rounded-lg px-4 py-3 flex items-start gap-3">
+          <EventTypeLabel type={e.type} />
+          <span className="text-xs text-gray-400 font-mono break-all">
+            {Object.keys(e.payload ?? {}).length > 0 ? JSON.stringify(e.payload) : '—'}
+          </span>
+        </div>
+      ))}
+    </div>
+  )
+}
+
 // ── page ──────────────────────────────────────────────────────────────────────
 
 export default function Grafieken() {
   const [limiet, setLimiet] = useState<Limiet>(50)
   const [filter, setFilter] = useState('')
-  const [events, setEvents] = useState<Event[]>([])
-
-  useEffect(() => {
-    fetchEvents(filter).then(setEvents)
-    const t = setInterval(() => fetchEvents(filter).then(setEvents), 10_000)
-    return () => clearInterval(t)
-  }, [filter])
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8 flex flex-col gap-8">
@@ -202,19 +241,7 @@ export default function Grafieken() {
             </button>
           ))}
         </div>
-        <div className="flex flex-col gap-2">
-          {events.length === 0 && (
-            <p className="text-sm text-gray-600">Geen events gevonden.</p>
-          )}
-          {events.map(e => (
-            <div key={e.id} className="bg-gray-900 rounded-lg px-4 py-3 flex items-start gap-3">
-              <EventTypeLabel type={e.type} />
-              <span className="text-xs text-gray-400 font-mono break-all">
-                {Object.keys(e.payload ?? {}).length > 0 ? JSON.stringify(e.payload) : '—'}
-              </span>
-            </div>
-          ))}
-        </div>
+        <EventLog filter={filter} />
       </section>
 
     </div>
