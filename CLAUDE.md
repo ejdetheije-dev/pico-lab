@@ -127,6 +127,10 @@ Stand per 2026-06-12:
     GPIO 26 en 27 op hetzelfde signaal = MAX4466 onderdrukt LDR-meting volledig.
   - LDR kalibratie bijgewerkt: `min_raw=4000`, `max_raw=34088`.
   - `tools/test_max4466.py`: kalibratiescript met amplitude live in terminal.
+- **Bewegingsdetectie betrouwbaarheid verbeterd (2026-06-12):**
+  - HC-SR04 miste events tijdens sensor-inserts (40s blindspot per poll-cyclus).
+  - Oplossing: `verwerk_beweging()` helper, zelfde patroon als `verwerk_geluid()`.
+  - Aangeroepen in hoofdlus én tussen elke sensor-insert.
 - **Volgende stappen:** PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
