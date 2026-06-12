@@ -59,15 +59,19 @@ for _ in range(5):
         break
     except Exception:
         time.sleep(2)
+laatste_licht = ldr.lees()
+laatste_druk = round(bmp180.lees_druk(), 1)
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
 
 laatste_sensor_log = time.ticks_ms()
 laatste_command_poll = time.ticks_ms()
+laatste_lcd_update = time.ticks_ms()
 beweging_actief = False
 laatste_beweging = time.ticks_ms()
 laatste_event = "-"
 temp_alert_actief = False
+lcd_scherm = 0
 
 def verwerk_commands():
     global laatste_command_poll, poll_interval, settings
@@ -134,17 +138,18 @@ while True:
                 laatste_temp, laatste_vocht = dht11.lees()
             except Exception:
                 print("DHT11 fout, gebruik laatste waarde")
-        licht = ldr.lees()
-        druk = round(bmp180.lees_druk(), 1)
-        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", licht, "Druk:", druk)
+        laatste_licht = ldr.lees()
+        laatste_druk = round(bmp180.lees_druk(), 1)
+        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht, "Druk:", laatste_druk)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         verwerk_commands()
         supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
         verwerk_commands()
-        supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": licht})
+        supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
         verwerk_commands()
-        supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": druk})
+        supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": laatste_druk})
         laatste_sensor_log = time.ticks_ms()
+        laatste_lcd_update = 0  # forceer direct LCD refresh
 
         # Temperatuuralert: stuur eenmalig bij overschrijding, reset bij herstel
         drempel = settings["temp_alert_threshold"]
@@ -159,7 +164,16 @@ while True:
 
     verwerk_commands()
 
-    # LCD bijwerken
-    lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", laatste_event)
+    # LCD roteren: scherm 0 = sensoren, scherm 1 = beweging — elke 4s wisselen
+    if time.ticks_diff(time.ticks_ms(), laatste_lcd_update) >= 4000:
+        if lcd_scherm == 0:
+            r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% " + str(int(laatste_druk)) + "h"
+            r2 = "Licht:" + str(laatste_licht) + "%"
+        else:
+            r1 = "Beweging: " + ("JA!" if beweging_actief else "nee")
+            r2 = laatste_event
+        lcd.toon(r1, r2)
+        lcd_scherm = 1 - lcd_scherm
+        laatste_lcd_update = time.ticks_ms()
 
     time.sleep(1)
