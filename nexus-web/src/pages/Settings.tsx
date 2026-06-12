@@ -95,12 +95,12 @@ export default function Settings() {
           <label className="text-sm text-gray-400">Pushover notificaties</label>
           <button
             onClick={() => setPushoverEnabled(v => !v)}
-            className={`relative w-11 h-6 rounded-full overflow-hidden transition-colors duration-200 ${
+            className={`inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 ${
               pushoverEnabled ? 'bg-blue-600' : 'bg-gray-600'
             }`}
           >
             <span
-              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+              className={`inline-block w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
                 pushoverEnabled ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
