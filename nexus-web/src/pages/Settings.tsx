@@ -4,22 +4,25 @@ import { supabase } from '../lib/supabase'
 const DEFAULTS = {
   poll_interval_s: 60,
   temp_alert_threshold: 30,
+  pushover_enabled: true,
 }
 
-async function fetchSettings(): Promise<typeof DEFAULTS> {
+async function fetchSettings() {
   const { data, error } = await supabase.from('settings').select('key, value')
   if (error || !data) return { ...DEFAULTS }
-  const map: Record<string, number> = {}
-  for (const row of data) map[row.key] = Number(row.value)
+  const map: Record<string, string> = {}
+  for (const row of data) map[row.key] = row.value
   return {
-    poll_interval_s: map['poll_interval_s'] ?? DEFAULTS.poll_interval_s,
-    temp_alert_threshold: map['temp_alert_threshold'] ?? DEFAULTS.temp_alert_threshold,
+    poll_interval_s: map['poll_interval_s'] ? Number(map['poll_interval_s']) : DEFAULTS.poll_interval_s,
+    temp_alert_threshold: map['temp_alert_threshold'] ? Number(map['temp_alert_threshold']) : DEFAULTS.temp_alert_threshold,
+    pushover_enabled: map['pushover_enabled'] !== undefined ? map['pushover_enabled'] === 'true' : DEFAULTS.pushover_enabled,
   }
 }
 
 export default function Settings() {
   const [pollInterval, setPollInterval] = useState(DEFAULTS.poll_interval_s)
   const [tempDrempel, setTempDrempel] = useState(DEFAULTS.temp_alert_threshold)
+  const [pushoverEnabled, setPushoverEnabled] = useState(DEFAULTS.pushover_enabled)
   const [bezig, setBezig] = useState(false)
   const [status, setStatus] = useState('')
 
@@ -27,6 +30,7 @@ export default function Settings() {
     fetchSettings().then(s => {
       setPollInterval(s.poll_interval_s)
       setTempDrempel(s.temp_alert_threshold)
+      setPushoverEnabled(s.pushover_enabled)
     })
   }, [])
 
@@ -38,6 +42,7 @@ export default function Settings() {
       [
         { key: 'poll_interval_s', value: pollInterval },
         { key: 'temp_alert_threshold', value: tempDrempel },
+        { key: 'pushover_enabled', value: pushoverEnabled ? 'true' : 'false' },
       ],
       { onConflict: 'key' }
     )
@@ -84,6 +89,22 @@ export default function Settings() {
             value={tempDrempel}
             onChange={e => setTempDrempel(Number(e.target.value))}
           />
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-gray-400">Pushover notificaties</label>
+          <button
+            onClick={() => setPushoverEnabled(v => !v)}
+            className={`relative w-11 h-6 rounded-full transition-colors duration-200 ${
+              pushoverEnabled ? 'bg-blue-600' : 'bg-gray-600'
+            }`}
+          >
+            <span
+              className={`absolute top-1 w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                pushoverEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
         </div>
 
         <button

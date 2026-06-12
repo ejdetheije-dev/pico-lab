@@ -9,7 +9,7 @@ _HEADERS = {"Content-Type": "application/json"}
 
 
 def stuur(bericht, titel="Nexus"):
-    """Stuur een push-notificatie. Fouten worden gelogd maar niet doorgegeven."""
+    """Stuur een push-notificatie. Geeft True bij succes, False bij fout."""
     try:
         r = urequests.post(
             _URL,
@@ -23,5 +23,7 @@ def stuur(bericht, titel="Nexus"):
         )
         r.close()
         print("Pushover verstuurd:", bericht)
+        return True
     except Exception as e:
         print("Pushover fout:", e)
+        return False

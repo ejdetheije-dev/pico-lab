@@ -16,11 +16,12 @@ AFWEZIG_NA = 30
 
 
 def laad_settings():
-    """Laad poll_interval_s en temp_alert_threshold uit Supabase. Geeft defaults bij fout."""
+    """Laad settings uit Supabase. Geeft defaults bij fout."""
     s = supabase.get_settings()
     return {
         "poll_interval_s": int(s.get("poll_interval_s", 60)),
         "temp_alert_threshold": int(s.get("temp_alert_threshold", 30)),
+        "pushover_enabled": s.get("pushover_enabled", "true") == "true",
     }
 
 
@@ -89,7 +90,10 @@ def verwerk_commands():
             lcd.toon("Ventilator", "UIT")
             time.sleep(2)
         elif type_ == "notify":
-            pushover(payload.get("bericht", ""), payload.get("titel", "Nexus"))
+            if settings["pushover_enabled"]:
+                bericht = payload.get("bericht", "")
+                if pushover(bericht, payload.get("titel", "Nexus")):
+                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": bericht}})
         elif type_ == "set_setting":
             settings = laad_settings()
             poll_interval = settings["poll_interval_s"]
@@ -110,7 +114,9 @@ while True:
             laatste_event = "Beweging!"
             print("Event: motion_detected, afstand:", round(afstand, 1))
             supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
-            pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)")
+            if settings["pushover_enabled"]:
+                if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
+                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
         elif afstand >= BEWEGING_DREMPEL and beweging_actief:
             if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
                 beweging_actief = False
@@ -144,7 +150,10 @@ while True:
         drempel = settings["temp_alert_threshold"]
         if laatste_temp > drempel and not temp_alert_actief:
             temp_alert_actief = True
-            pushover("Temperatuur " + str(laatste_temp) + "C (drempel " + str(drempel) + "C)", "Nexus alert")
+            if settings["pushover_enabled"]:
+                bericht = "Temperatuur " + str(laatste_temp) + "C (drempel " + str(drempel) + "C)"
+                if pushover(bericht, "Nexus alert"):
+                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": bericht}})
         elif laatste_temp <= drempel and temp_alert_actief:
             temp_alert_actief = False
 
