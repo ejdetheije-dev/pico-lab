@@ -9,6 +9,7 @@ from sensors.bmp180 import BMP180
 from output.lcd import LCD
 from output.buzzer import Buzzer
 from output.relay import Relay
+from output.pushover import stuur as pushover
 
 BEWEGING_DREMPEL = 50
 AFWEZIG_NA = 30
@@ -65,6 +66,7 @@ laatste_command_poll = time.ticks_ms()
 beweging_actief = False
 laatste_beweging = time.ticks_ms()
 laatste_event = "-"
+temp_alert_actief = False
 
 def verwerk_commands():
     global laatste_command_poll, poll_interval, settings
@@ -86,6 +88,8 @@ def verwerk_commands():
             ventilator.uit()
             lcd.toon("Ventilator", "UIT")
             time.sleep(2)
+        elif type_ == "notify":
+            pushover(payload.get("bericht", ""), payload.get("titel", "Nexus"))
         elif type_ == "set_setting":
             settings = laad_settings()
             poll_interval = settings["poll_interval_s"]
@@ -106,6 +110,7 @@ while True:
             laatste_event = "Beweging!"
             print("Event: motion_detected, afstand:", round(afstand, 1))
             supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
+            pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)")
         elif afstand >= BEWEGING_DREMPEL and beweging_actief:
             if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
                 beweging_actief = False
@@ -134,6 +139,14 @@ while True:
         verwerk_commands()
         supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": druk})
         laatste_sensor_log = time.ticks_ms()
+
+        # Temperatuuralert: stuur eenmalig bij overschrijding, reset bij herstel
+        drempel = settings["temp_alert_threshold"]
+        if laatste_temp > drempel and not temp_alert_actief:
+            temp_alert_actief = True
+            pushover("Temperatuur " + str(laatste_temp) + "C (drempel " + str(drempel) + "C)", "Nexus alert")
+        elif laatste_temp <= drempel and temp_alert_actief:
+            temp_alert_actief = False
 
     verwerk_commands()
 
