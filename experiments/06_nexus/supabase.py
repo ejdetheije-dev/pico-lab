@@ -47,9 +47,9 @@ def get_pending_commands():
                 SUPABASE_URL + "/rest/v1/commands?executed_at=is.null&order=id.asc",
                 headers=_auth,
             )
-            result = r.json()
+            data = r.content
             r.close()
-            return result
+            return ujson.loads(data)
         except OSError:
             if poging == 0:
                 time.sleep_ms(500)
@@ -66,9 +66,9 @@ def get_settings():
                 SUPABASE_URL + "/rest/v1/settings?select=key,value",
                 headers=_auth,
             )
-            rows = r.json()
+            data = r.content
             r.close()
-            return {row["key"]: row["value"] for row in rows}
+            return {row["key"]: row["value"] for row in ujson.loads(data)}
         except OSError:
             if poging == 0:
                 time.sleep_ms(500)
@@ -83,7 +83,7 @@ def mark_executed(command_id):
         r = urequests.patch(
             SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
             headers=_write_headers,
-            data=ujson.dumps({"executed_at": "now()"}),
+            data=ujson.dumps({"executed_at": "now"}),
         )
         r.close()
     except OSError as e:

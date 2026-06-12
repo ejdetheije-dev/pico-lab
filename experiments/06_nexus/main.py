@@ -55,7 +55,7 @@ for _ in range(5):
     try:
         laatste_temp, laatste_vocht = dht11.lees()
         break
-    except OSError:
+    except Exception:
         time.sleep(2)
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
@@ -117,11 +117,11 @@ while True:
     if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
         try:
             laatste_temp, laatste_vocht = dht11.lees()
-        except OSError:
+        except Exception:
             time.sleep(2)
             try:
                 laatste_temp, laatste_vocht = dht11.lees()
-            except OSError:
+            except Exception:
                 print("DHT11 fout, gebruik laatste waarde")
         licht = ldr.lees()
         druk = round(bmp180.lees_druk(), 1)

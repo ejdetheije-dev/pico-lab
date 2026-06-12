@@ -21,12 +21,12 @@ class HCSR04:
         while self._echo.value() == 0:
             if time.ticks_diff(timeout, time.ticks_us()) <= 0:
                 return None
-            start = time.ticks_us()
+        start = time.ticks_us()
 
         timeout = time.ticks_add(time.ticks_us(), 30000)
         while self._echo.value() == 1:
             if time.ticks_diff(timeout, time.ticks_us()) <= 0:
                 return None
-            end = time.ticks_us()
+        end = time.ticks_us()
 
         return (time.ticks_diff(end, start) * 0.0343) / 2
