@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase'
 type Punt = { ts: number; waarde: number; label: string }
 type Event = { id: number; type: string; payload: Record<string, unknown> }
 type SensorConf = { sensor: string; label: string; unit: string; kleur: string }
-type Limiet = 50 | 100 | 1000
+type Limiet = 50 | 100 | 1000 | 50000
 
 // ── config ────────────────────────────────────────────────────────────────────
 
@@ -28,7 +28,7 @@ const EVENT_FILTERS = [
   { value: 'pushover_sent',   label: 'Pushover' },
 ]
 
-const LIMIETEN: Limiet[] = [50, 100, 1000]
+const LIMIETEN: Limiet[] = [50, 100, 1000, 50000]
 
 // ── helpers ───────────────────────────────────────────────────────────────────
 
