@@ -4,7 +4,7 @@ import { supabase } from '../lib/supabase'
 const DEFAULTS = {
   poll_interval_s: 60,
   temp_alert_threshold: 30,
-  pushover_enabled: true,
+  pushover_enabled: false,
 }
 
 async function fetchSettings() {

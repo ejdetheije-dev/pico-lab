@@ -21,7 +21,7 @@ def laad_settings():
     return {
         "poll_interval_s": int(s.get("poll_interval_s", 60)),
         "temp_alert_threshold": int(s.get("temp_alert_threshold", 30)),
-        "pushover_enabled": s.get("pushover_enabled", "true") == "true",
+        "pushover_enabled": s.get("pushover_enabled", "false") == "true",
     }
 
 
