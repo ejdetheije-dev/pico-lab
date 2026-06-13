@@ -2,10 +2,8 @@ import { useEffect, useState } from 'react'
 import { supabase } from '../lib/supabase'
 import SensorCard from '../components/SensorCard'
 
-type Reading = {
-  sensor: string
-  value: number
-}
+type Reading = { sensor: string; value: number }
+type Status = { beweging: string | null; geluid: string | null }
 
 const SENSOR_META: Record<string, { label: string; unit: string }> = {
   dht11_temp: { label: 'Temperatuur', unit: ' °C' },
@@ -31,12 +29,40 @@ async function fetchLatest(): Promise<Record<string, Reading>> {
   return latest
 }
 
+async function fetchStatus(): Promise<Status> {
+  const [{ data: m }, { data: s }] = await Promise.all([
+    supabase.from('events').select('type')
+      .in('type', ['motion_detected', 'motion_absent'])
+      .order('id', { ascending: false }).limit(1),
+    supabase.from('events').select('type')
+      .in('type', ['sound_detected', 'sound_absent'])
+      .order('id', { ascending: false }).limit(1),
+  ])
+  return { beweging: m?.[0]?.type ?? null, geluid: s?.[0]?.type ?? null }
+}
+
+function StatusCard({ label, actief }: { label: string; actief: boolean | null }) {
+  return (
+    <div className="bg-gray-900 rounded-xl p-6 flex flex-col gap-2">
+      <span className="text-sm text-gray-400">{label}</span>
+      <span className={`text-4xl font-bold ${actief === null ? 'text-gray-600' : actief ? 'text-orange-400' : 'text-gray-500'}`}>
+        {actief === null ? '—' : actief ? 'JA' : 'nee'}
+      </span>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const [readings, setReadings] = useState<Record<string, Reading>>({})
+  const [status, setStatus] = useState<Status>({ beweging: null, geluid: null })
 
   useEffect(() => {
     fetchLatest().then(setReadings)
-    const interval = setInterval(() => fetchLatest().then(setReadings), 5000)
+    fetchStatus().then(setStatus)
+    const interval = setInterval(() => {
+      fetchLatest().then(setReadings)
+      fetchStatus().then(setStatus)
+    }, 5000)
     return () => clearInterval(interval)
   }, [])
 
@@ -56,6 +82,8 @@ export default function Dashboard() {
             />
           )
         })}
+        <StatusCard label="Beweging" actief={status.beweging === null ? null : status.beweging === 'motion_detected'} />
+        <StatusCard label="Geluid" actief={status.geluid === null ? null : status.geluid === 'sound_detected'} />
       </div>
     </div>
   )

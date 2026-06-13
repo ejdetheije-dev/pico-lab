@@ -26,6 +26,7 @@ const EVENT_FILTERS = [
   { value: '',                label: 'Alles' },
   { value: 'motion_detected', label: 'Beweging' },
   { value: 'motion_absent',   label: 'Geen beweging' },
+  { value: 'sound_detected',  label: 'Geluid' },
   { value: 'pushover_sent',   label: 'Pushover' },
 ]
 
@@ -144,6 +145,8 @@ function EventTypeLabel({ type }: { type: string }) {
   const kleuren: Record<string, string> = {
     motion_detected: 'bg-orange-500',
     motion_absent:   'bg-gray-500',
+    sound_detected:  'bg-green-500',
+    sound_absent:    'bg-gray-500',
     pushover_sent:   'bg-blue-500',
   }
   return (

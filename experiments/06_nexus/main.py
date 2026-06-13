@@ -14,6 +14,7 @@ from output.pushover import stuur as pushover
 
 BEWEGING_DREMPEL = 50
 AFWEZIG_NA = 30
+GELUID_AFWEZIG_NA = 5
 
 
 def laad_settings():
@@ -74,6 +75,7 @@ laatste_beweging = time.ticks_ms()
 laatste_event = "-"
 temp_alert_actief = False
 geluid_actief = False
+laatste_geluid = time.ticks_ms()
 lcd_scherm = 0
 
 def verwerk_beweging():
@@ -100,14 +102,17 @@ def verwerk_beweging():
 
 
 def verwerk_geluid():
-    global geluid_actief, laatste_event
+    global geluid_actief, laatste_event, laatste_geluid
+    nu = time.ticks_ms()
     amplitude = geluid.meet_amplitude()
-    if amplitude > GELUID_DREMPEL and not geluid_actief:
-        geluid_actief = True
-        laatste_event = "Geluid!"
-        print("Event: sound_detected, amplitude:", amplitude)
-        supabase.insert("events", {"type": "sound_detected", "payload": {"amplitude": amplitude}})
-    elif amplitude <= GELUID_DREMPEL and geluid_actief:
+    if amplitude > GELUID_DREMPEL:
+        laatste_geluid = nu
+        if not geluid_actief:
+            geluid_actief = True
+            laatste_event = "Geluid!"
+            print("Event: sound_detected, amplitude:", amplitude)
+            supabase.insert("events", {"type": "sound_detected", "payload": {"amplitude": amplitude}})
+    elif geluid_actief and time.ticks_diff(nu, laatste_geluid) > GELUID_AFWEZIG_NA * 1000:
         geluid_actief = False
         laatste_event = "Geen geluid"
         print("Event: sound_absent")
