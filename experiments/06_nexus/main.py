@@ -12,7 +12,7 @@ from output.buzzer import Buzzer
 from output.relay import Relay
 from output.pushover import stuur as pushover
 
-BEWEGING_DREMPEL = 50
+BEWEGING_DELTA = 15  # cm dichter dan rustafstand = beweging
 AFWEZIG_NA = 30
 GELUID_AFWEZIG_NA = 5
 
@@ -55,6 +55,10 @@ bmp180 = BMP180(lcd.i2c)
 buzzer = Buzzer()
 ventilator = Relay(21)
 
+metingen = [m for _ in range(5) if (m := sonar.meet_afstand()) is not None]
+baseline_afstand = sum(metingen) / len(metingen) if metingen else 200
+print("Baseline HC-SR04:", round(baseline_afstand, 1), "cm")
+
 laatste_temp, laatste_vocht = 0, 0
 for _ in range(5):
     try:
@@ -84,16 +88,18 @@ def verwerk_beweging():
     afstand = sonar.meet_afstand()
     if afstand is None:
         return
-    if afstand < BEWEGING_DREMPEL and not beweging_actief:
-        beweging_actief = True
+    beweging = (baseline_afstand - afstand) > BEWEGING_DELTA
+    if beweging:
         laatste_beweging = nu
-        laatste_event = "Beweging!"
-        print("Event: motion_detected, afstand:", round(afstand, 1))
-        supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
-        if settings["pushover_enabled"]:
-            if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
-                supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
-    elif afstand >= BEWEGING_DREMPEL and beweging_actief:
+        if not beweging_actief:
+            beweging_actief = True
+            laatste_event = "Beweging!"
+            print("Event: motion_detected, afstand:", round(afstand, 1))
+            supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
+            if settings["pushover_enabled"]:
+                if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
+                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
+    elif beweging_actief:
         if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
             beweging_actief = False
             laatste_event = "Geen beweging"
@@ -120,7 +126,7 @@ def verwerk_geluid():
 
 
 def verwerk_commands():
-    global laatste_command_poll, poll_interval, settings
+    global laatste_command_poll, poll_interval, settings, laatste_lcd_update
     if time.ticks_diff(time.ticks_ms(), laatste_command_poll) < 3000:
         return
     for cmd in supabase.get_pending_commands():
@@ -139,6 +145,25 @@ def verwerk_commands():
             ventilator.uit()
             lcd.toon("Ventilator", "UIT")
             time.sleep(2)
+        elif type_ == "mood_alert":
+            naam = payload.get("naam", "")
+            tekst = payload.get("tekst", "")
+            mood = payload.get("mood", "")
+            if mood == "fijn":
+                buzzer.piep(523, 200)
+                time.sleep_ms(80)
+                buzzer.piep(659, 200)
+                time.sleep_ms(80)
+                buzzer.piep(784, 400)
+            else:
+                buzzer.piep(784, 200)
+                time.sleep_ms(80)
+                buzzer.piep(523, 200)
+                time.sleep_ms(80)
+                buzzer.piep(392, 500)
+            lcd.toon((naam + ": " + mood)[:16], tekst[:16])
+            time.sleep(10)
+            laatste_lcd_update = time.ticks_ms()
         elif type_ == "notify":
             if settings["pushover_enabled"]:
                 bericht = payload.get("bericht", "")

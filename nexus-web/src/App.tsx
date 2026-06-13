@@ -3,14 +3,16 @@ import Dashboard from './pages/Dashboard'
 import Commands from './pages/Commands'
 import Settings from './pages/Settings'
 import Grafieken from './pages/Grafieken'
+import Mood from './pages/Mood'
 
-type Pagina = 'dashboard' | 'grafieken' | 'commands' | 'settings'
+type Pagina = 'dashboard' | 'grafieken' | 'commands' | 'settings' | 'mood'
 
 const NAV: { id: Pagina; label: string }[] = [
   { id: 'dashboard',  label: 'Dashboard' },
   { id: 'grafieken',  label: 'Grafieken' },
   { id: 'commands',   label: 'Commands' },
   { id: 'settings',   label: 'Settings' },
+  { id: 'mood',       label: 'Mood' },
 ]
 
 export default function App() {
@@ -33,6 +35,7 @@ export default function App() {
       {pagina === 'grafieken'  && <Grafieken />}
       {pagina === 'commands'   && <Commands />}
       {pagina === 'settings'   && <Settings />}
+      {pagina === 'mood'       && <Mood />}
     </div>
   )
 }
