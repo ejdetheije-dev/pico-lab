@@ -216,6 +216,53 @@ real-time helemaal niet voor die tabel.
 - **Loop-snelheid:** `time.sleep(1)` geeft maar 4.5% kans een klap te vangen. Gebruik
   `time.sleep_ms(100)` in de hoofdlus voor 10x hogere meetfrequentie.
 
+## Bewegingsdetectie baseline-aanpak (bewezen 2026-06-13)
+
+Vaste drempelwaarde (`BEWEGING_DREMPEL = 50`) werkt niet als de sensor altijd
+iets binnen die afstand ziet (muur, object op bureau). Oplossing: meet rustafstand
+bij opstart en detecteer beweging als delta > `BEWEGING_DELTA`.
+
+```python
+metingen = [m for _ in range(5) if (m := sonar.meet_afstand()) is not None]
+baseline_afstand = sum(metingen) / len(metingen) if metingen else 200
+
+# In verwerk_beweging():
+beweging = (baseline_afstand - afstand) > BEWEGING_DELTA
+```
+
+- Zorg dat de ruimte voor de sensor vrij is bij opstart — baseline wordt dan éénmalig gemeten.
+- `BEWEGING_DELTA = 15` cm werkt goed bij een normale kameropstelling.
+- `laatste_beweging` bijwerken bij *elke* meting met beweging (niet alleen de eerste),
+  zodat de debounce loopt vanaf de laatste detectie.
+
+## Open-Meteo integratie (bewezen 2026-06-13)
+
+Gratis buitenweer-API, geen API-key nodig. Geeft temperatuur, vochtigheid en luchtdruk.
+
+```
+https://api.open-meteo.com/v1/forecast
+  ?latitude=52.13&longitude=4.45
+  &current=temperature_2m,relative_humidity_2m,surface_pressure
+  &timezone=Europe/Amsterdam
+```
+
+- Ververs maximaal elke 60 seconden — data update toch maar elk uur.
+- Licht (lux) is niet beschikbaar; alleen UV-index en zonnestraling (W/m²).
+- Coördinaten aanpassen in `Dashboard.tsx` constanten `LAT` en `LON`.
+
+## Mood switch valkuilen (bewezen 2026-06-13)
+
+- **LCD wordt direct overschreven door rotatie-logica:** na `lcd.toon()` in een
+  command-handler moet `laatste_lcd_update = time.ticks_ms()` gereset worden,
+  anders wisselt de normale rotatie het scherm na <1s al.
+- **`time.sleep()` voor `lcd.toon()`:** verkeerde volgorde — toon eerst, slaap dan.
+- **Supabase tabellen aanmaken zonder RLS:** beide tabellen (`mood_users`, `moods`)
+  aanmaken via SQL editor en "Enable Row Level Security" **uit** laten.
+- **Code vergeten:** geen reset-functie gebouwd. Gebruiker verwijdert zelf de rij
+  uit `mood_users` in de Supabase dashboard.
+- **LCD breedte 16 tekens:** `(naam + ": " + mood)[:16]` trunceert automatisch.
+  Namen langer dan 8 tekens worden afgekapt bij display.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`

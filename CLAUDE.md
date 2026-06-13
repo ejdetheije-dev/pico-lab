@@ -144,6 +144,24 @@ Stand per 2026-06-13:
 - **Event log verbeterd (2026-06-13):**
   - Geluid-filter knop toegevoegd in Grafieken (`sound_detected`).
   - `sound_detected` krijgt groen label, `sound_absent` grijs.
+- **Bewegingsdetectie verbeterd via baseline-aanpak (2026-06-13):**
+  - Vaste drempel `BEWEGING_DREMPEL = 50` vervangen door dynamische baseline.
+  - Bij opstart meet Pico de rustafstand (5 pings, gemiddelde). Beweging =
+    (baseline - meting) > `BEWEGING_DELTA` (15 cm).
+  - Werkt ongeacht opstelling — sensor past zich aan bij herstart.
+  - `laatste_beweging` bijgewerkt bij elke meting met beweging (debounce vanaf laatste detectie).
+- **Open-Meteo buiten-data toegevoegd aan dashboard (2026-06-13):**
+  - Sectie "Buiten — Voorschoten (Open-Meteo)" onder de sensor-kaarten.
+  - Toont temperatuur, vochtigheid en luchtdruk van buitenlocatie.
+  - Per kaart: buitenwaarde + delta tov Nexus (oranje = Nexus hoger, blauw = lager).
+  - Locatie: lat 52.13, lon 4.45 (Voorschoten). Ververst elke 60 seconden. Geen API-key.
+- **PICO-45 afgerond (2026-06-13): Mood switch**
+  - Nieuwe pagina "Mood" op de website: naam + 3-cijferige code + fijn/matig/slecht.
+  - Twee Supabase-tabellen: `mood_users` (name, code) en `moods` (user_name, mood, tekst).
+  - Eerste gebruik: gebruiker aangemaakt met naam + code. Code vergeten → rij verwijderen in Supabase.
+  - Bij `fijn` en `slecht`: buzzer + tekst 10s op LCD.
+    Fijn: C5→E5→G5 (oplopend majeur). Slecht: G5→C5→G4 (dalend, zwaar).
+  - Command `mood_alert` in `verwerk_commands()`. `laatste_lcd_update` gereset na display.
 - **Volgende stappen:** PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
@@ -164,6 +182,8 @@ Stand per 2026-06-13:
 | `sensor_readings` | `id`, `sensor`, `value`, `created_at` (timestamptz, DEFAULT now()) |
 | `events` | `id`, `type`, `payload` |
 | `settings` | `id`, `key`, `value` (`key` is uniek, UPSERT op conflict) |
+| `mood_users` | `id`, `name` (uniek), `code`, `created_at` |
+| `moods` | `id`, `user_name`, `mood`, `tekst`, `created_at` |
 
 RLS is uitgeschakeld op alle tabellen — anon key heeft volledige toegang.
 - GY-BME280 en GY-BMP280 worden geleverd op **2026-06-25**. Na ontvangst
