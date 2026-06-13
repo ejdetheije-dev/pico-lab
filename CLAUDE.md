@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-12:
+Stand per 2026-06-13:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -131,6 +131,19 @@ Stand per 2026-06-12:
   - HC-SR04 miste events tijdens sensor-inserts (40s blindspot per poll-cyclus).
   - Oplossing: `verwerk_beweging()` helper, zelfde patroon als `verwerk_geluid()`.
   - Aangeroepen in hoofdlus én tussen elke sensor-insert.
+- **MAX4466 kalibratie bevestigd (2026-06-13):**
+  - Potmeter linksom gedraaid (meer gain). Ruisvloer: ~993–2641. DREMPEL=7000 blijft correct.
+  - Ruisvloer 2.6× marge onder drempel; praten begint bij ~8050.
+- **Dashboard beweging/geluid toegevoegd (2026-06-13):**
+  - `StatusCard` component: toont "JA" (oranje) / "nee" (grijs) op basis van laatste event.
+  - `fetchStatus()`: haalt laatste `motion_*` en `sound_*` event op uit Supabase, refresht elke 5s.
+- **Geluid debounce toegevoegd (2026-06-13):**
+  - `GELUID_AFWEZIG_NA = 5` seconden — `sound_absent` wordt pas gelogd na 5s stilte.
+  - Zelfde patroon als `AFWEZIG_NA = 30` voor beweging.
+  - Vóór fix: elke adempauze triggerde `sound_absent`, website zag altijd "nee".
+- **Event log verbeterd (2026-06-13):**
+  - Geluid-filter knop toegevoegd in Grafieken (`sound_detected`).
+  - `sound_detected` krijgt groen label, `sound_absent` grijs.
 - **Volgende stappen:** PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
