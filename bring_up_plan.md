@@ -263,6 +263,52 @@ https://api.open-meteo.com/v1/forecast
 - **LCD breedte 16 tekens:** `(naam + ": " + mood)[:16]` trunceert automatisch.
   Namen langer dan 8 tekens worden afgekapt bij display.
 
+## HC-SR501 PIR sensor valkuilen (bewezen 2026-06-15)
+
+- **Geen labels, geen LED:** sommige modules hebben geen pinlabels en geen status-LED.
+  Pinout met multimeter bepalen vóór aansluiten — niet gokken.
+- **Diagnose "altijd 0":** gebruik `Pin(x, Pin.IN, Pin.PULL_DOWN)`. Altijd `0` ook
+  zonder OUT aangesloten = GPIO vrij. Altijd `0` mét OUT = sensor triggert niet of
+  niet gevoed.
+- **Altijd `1`:** waarschijnlijk VCC en OUT verwisseld (5V op GPIO), of opwarmfase
+  (eerste 30–60s na aansluiting kan PIR continu HIGH geven).
+- **Opwarmfase missen:** verbind sensor, start script direct, kijk of eerste 30s `1`
+  geven — werkende PIR geeft tijdens opwarming altijd HIGH.
+- **GPIO 17 bezet door HC-SR04:** gebruik GPIO 22 als vrij alternatief.
+
+## supabase.py mark_executed valkuil (bewezen 2026-06-15)
+
+`_write_headers` moet `"Connection": "close"` bevatten. Zonder deze header krijgen
+PATCH-requests ECONNRESET terwijl POST-requests (via `_post` met retry) wel werken.
+Symptoom: commands worden uitgevoerd maar niet gemarkeerd — blijven eindeloos herhalen.
+
+```python
+_write_headers = {
+    ...
+    "Connection": "close",  # verplicht, anders ECONNRESET op PATCH
+}
+```
+
+`mark_executed()` moet ook retry-logica hebben (zelfde patroon als `_post`).
+
+## Recharts X-as met variabele datadichtheid (bewezen 2026-06-15)
+
+`interval` en `minTickGap` werken onbetrouwbaar als data ongelijkmatig verdeeld is
+over de tijd. De betrouwbare aanpak: genereer zelf 5 gelijkmatig verdeelde ticks:
+
+```typescript
+function maakTicks(data: Punt[], n = 5): number[] {
+  if (data.length < 2) return data.map(p => p.ts)
+  const min = data[0].ts
+  const max = data[data.length - 1].ts
+  return Array.from({ length: n }, (_, i) => Math.round(min + (i / (n - 1)) * (max - min)))
+}
+// In XAxis: ticks={maakTicks(data)} interval={0}
+```
+
+Zet ook verticale gridlijnen uit: `<CartesianGrid vertical={false} />` — anders
+krijg je een strependichtheid bij 1000+ datapunten.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`

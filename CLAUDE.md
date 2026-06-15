@@ -162,6 +162,21 @@ Stand per 2026-06-13:
   - Bij `fijn` en `slecht`: buzzer + tekst 10s op LCD.
     Fijn: C5→E5→G5 (oplopend majeur). Slecht: G5→C5→G4 (dalend, zwaar).
   - Command `mood_alert` in `verwerk_commands()`. `laatste_lcd_update` gereset na display.
+- **HC-SR501 PIR sensor getest (2026-06-15):**
+  - Sensor op GPIO 22 getest (GPIO 17 bezet door HC-SR04).
+  - Geen reactie: nooit `1` gezien, ook niet in opwarmfase (30–60s).
+  - Beide pinout-richtingen geprobeerd — beide geven altijd `0`.
+  - Conclusie: sensor defect, zelfde lot als KY-038.
+- **supabase.py fix (2026-06-15):**
+  - `_write_headers` miste `"Connection": "close"` → PATCH requests kregen ECONNRESET.
+  - `mark_executed()` had geen retry-logica → buzzer/mood commands bleven hangen in queue.
+  - Fix: `Connection: close` toegevoegd aan `_write_headers`, retry-logica in `mark_executed()`.
+- **Grafieken X-as fix (2026-06-15):**
+  - `interval` en `minTickGap` werkten onbetrouwbaar bij wisselende datadichtheid.
+  - Fix: `maakTicks(data, n=5)` genereert altijd 5 gelijkmatig verdeelde timestamps over de tijdreeks.
+  - Verticale gridlijnen uitgeschakeld (`vertical={false}`).
+- **test_nexus_all.py uitgebreid (2026-06-15):**
+  - LCD (I2C scan 0x27) en MAX4466 (ADC GPIO 27) toegevoegd — nu 8 componenten.
 - **Volgende stappen:** PICO-38 (IR bediening).
 
 ### Nieuwe hardware — beschikbaar en onderweg
