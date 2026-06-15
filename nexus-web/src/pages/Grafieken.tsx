@@ -36,9 +36,16 @@ const LIMIETEN: Limiet[] = [50, 100, 1000, 50000]
 
 function formatTick(ts: number, bereik: number): string {
   const d = new Date(ts)
-  const dag = d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
-  const tijd = d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
-  return bereik > 86_400_000 ? `${dag} ${tijd}` : tijd
+  if (bereik > 86_400_000)
+    return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+}
+
+function maakTicks(data: Punt[], n = 5): number[] {
+  if (data.length < 2) return data.map(p => p.ts)
+  const min = data[0].ts
+  const max = data[data.length - 1].ts
+  return Array.from({ length: n }, (_, i) => Math.round(min + (i / (n - 1)) * (max - min)))
 }
 
 function formatTooltip(ts: number): string {
@@ -98,7 +105,7 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', '
   }, [sensor, limiet])
 
   const bereik = data.length >= 2 ? data[data.length - 1].ts - data[0].ts : 0
-  const tickInterval = Math.max(0, Math.floor(data.length / 8) - 1)
+  const ticks = maakTicks(data)
 
   return (
     <div className="bg-gray-900 rounded-xl p-4 flex flex-col gap-2">
@@ -108,15 +115,16 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', '
       ) : (
         <ResponsiveContainer width="100%" height={160}>
           <LineChart data={data} margin={{ top: 4, right: 8, bottom: 0, left: -20 }}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#374151" />
+            <CartesianGrid strokeDasharray="3 3" stroke="#374151" vertical={false} />
             <XAxis
               dataKey="ts"
               type="number"
               scale="time"
               domain={['dataMin', 'dataMax']}
+              ticks={ticks}
               tickFormatter={ts => formatTick(ts, bereik)}
               tick={{ fontSize: 9, fill: '#9ca3af' }}
-              interval={tickInterval}
+              interval={0}
             />
             <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} domain={domain} />
             <Tooltip

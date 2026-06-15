@@ -14,6 +14,35 @@ def fail(naam, reden):
     results.append((naam, False))
 
 
+# --- I2C scan (LCD + BMP180) ---
+i2c = I2C(0, sda=Pin(0), scl=Pin(1), freq=400_000)
+adressen = i2c.scan()
+
+if 0x27 in adressen:
+    ok("LCD I2C (0x27 gevonden)")
+else:
+    fail("LCD I2C", f"0x27 niet gevonden, wel: {[hex(a) for a in adressen]}")
+
+if 0x77 in adressen:
+    ok("BMP180 I2C (0x77 gevonden)")
+else:
+    fail("BMP180 I2C", f"0x77 niet gevonden, wel: {[hex(a) for a in adressen]}")
+
+
+# --- BMP180 meting ---
+try:
+    from sensors.bmp180 import BMP180
+    bmp = BMP180(i2c)
+    druk = bmp.lees_druk()
+    temp_bmp = bmp.lees_temperatuur()
+    if 800 < druk < 1100:
+        ok(f"BMP180 ({druk:.1f} hPa, {temp_bmp:.1f}C)")
+    else:
+        fail("BMP180", f"druk buiten bereik: {druk:.1f} hPa")
+except Exception as e:
+    fail("BMP180", str(e))
+
+
 # --- DHT11 ---
 try:
     import dht
@@ -29,22 +58,7 @@ except Exception as e:
     fail("DHT11", str(e))
 
 
-# --- BMP180 ---
-try:
-    from sensors.bmp180 import BMP180
-    i2c = I2C(0, sda=Pin(0), scl=Pin(1), freq=400_000)
-    bmp = BMP180(i2c)
-    druk = bmp.lees_druk()
-    temp_bmp = bmp.lees_temperatuur()
-    if 800 < druk < 1100:
-        ok(f"BMP180 ({druk:.1f} hPa, {temp_bmp:.1f}C)")
-    else:
-        fail("BMP180", f"druk buiten bereik: {druk:.1f} hPa")
-except Exception as e:
-    fail("BMP180", str(e))
-
-
-# --- LDR ---
+# --- LDR (GPIO 26) ---
 try:
     ldr = ADC(Pin(26))
     raw = ldr.read_u16()
@@ -54,6 +68,19 @@ try:
         fail("LDR", f"waarde buiten bereik: {raw}")
 except Exception as e:
     fail("LDR", str(e))
+
+
+# --- MAX4466 geluidssensor (GPIO 27) ---
+try:
+    mic = ADC(Pin(27))
+    samples = [mic.read_u16() for _ in range(50)]
+    piek = max(samples) - min(samples)
+    if piek < 60000:
+        ok(f"MAX4466 (amplitude={piek}, ruisvloer ok)")
+    else:
+        fail("MAX4466", f"amplitude te hoog: {piek}")
+except Exception as e:
+    fail("MAX4466", str(e))
 
 
 # --- HC-SR04 ---
@@ -95,7 +122,7 @@ except Exception as e:
     fail("Buzzer", str(e))
 
 
-# --- Relay / ventilator ---
+# --- Relay kanaal 2 (GPIO 21) ---
 try:
     relay = Pin(21, Pin.OUT)
     relay.low()

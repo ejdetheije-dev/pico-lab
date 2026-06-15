@@ -14,6 +14,7 @@ _write_headers = {
     "Authorization": "Bearer " + SUPABASE_KEY,
     "Content-Type": "application/json",
     "Prefer": "return=minimal",
+    "Connection": "close",
 }
 
 
@@ -79,12 +80,17 @@ def get_settings():
 
 def mark_executed(command_id):
     """Zet executed_at op het huidige tijdstip voor een command."""
-    try:
-        r = urequests.patch(
-            SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
-            headers=_write_headers,
-            data=ujson.dumps({"executed_at": "now"}),
-        )
-        r.close()
-    except OSError as e:
-        print("mark_executed fout:", e)
+    for poging in range(2):
+        try:
+            r = urequests.patch(
+                SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
+                headers=_write_headers,
+                data=ujson.dumps({"executed_at": "now"}),
+            )
+            r.close()
+            return
+        except OSError:
+            if poging == 0:
+                time.sleep_ms(500)
+            else:
+                print("mark_executed fout: twee pogingen mislukt")
