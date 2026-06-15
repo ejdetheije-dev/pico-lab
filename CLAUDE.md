@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-13:
+Stand per 2026-06-15:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -177,17 +177,26 @@ Stand per 2026-06-13:
   - Verticale gridlijnen uitgeschakeld (`vertical={false}`).
 - **test_nexus_all.py uitgebreid (2026-06-15):**
   - LCD (I2C scan 0x27) en MAX4466 (ADC GPIO 27) toegevoegd — nu 8 componenten.
-- **Volgende stappen:** PICO-38 (IR bediening).
+- **PICO-46 aangemaakt (2026-06-15):** Adafruit TTL Serial JPEG Camera (VC0706).
+  - Arriveert 2026-06-25. Interface: UART TTL, 9600 baud.
+  - Voorgestelde pins: UART1 TX → GPIO 4, RX → GPIO 5.
+  - Voorziene trigger: beweging (HC-SR04) of geluid (MAX4466) → snapshot.
+- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25).
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
 - **BMP180** (in huis, werkend): I2C-adres 0x77, deelt bus met LCD op GPIO 0/1.
 - **KY-038 geluidssensor** (2x, beide defect): AO blijft op ~0.1V, DO triggert nooit.
-  Vervangen door MAX4466 (arriveert 2026-06-12). AO → GPIO 27, DO → GPIO 19.
+  Vervangen door MAX4466. AO → GPIO 27, DO → GPIO 19.
 - **4-kanaals relaismodule** (in huis, werkend): kanaal 1 beschadigd, kanaal 2 in gebruik.
   IN2 → GPIO 21, DC+ → 3V3, jumpers op H. PICO-43 afgerond.
 - **12V adaptor + ventilator** (in huis): aangesloten op relaiskanaal 2, werkt.
 - **MAX4466 geluidssensor** (2x, in huis, werkend): GPIO 27 (ADC1). PICO-42 afgerond.
+- **HC-SR501 PIR** (defect): getest op GPIO 22, nooit `1` gezien. Zelfde lot als KY-038.
+- **Adafruit TTL Serial JPEG Camera** (besteld, arriveert 2026-06-25): UART TTL, VC0706-chip.
+  GPIO 4 (TX) / GPIO 5 (RX) gereserveerd. PICO-46 aangemaakt.
+- **GY-BME280 / GY-BMP280** (besteld, arriveert 2026-06-25): I2C-adres 0x76 of 0x77.
+  Deelt bus met LCD en BMP180. Keuze BME280 vs BMP280 na ontvangst.
 
 ### Supabase kolomnamen (bewezen uit debug-sessie)
 

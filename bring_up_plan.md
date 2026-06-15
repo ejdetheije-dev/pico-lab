@@ -309,6 +309,43 @@ function maakTicks(data: Punt[], n = 5): number[] {
 Zet ook verticale gridlijnen uit: `<CartesianGrid vertical={false} />` — anders
 krijg je een strependichtheid bij 1000+ datapunten.
 
+## Adafruit TTL JPEG Camera (PICO-46, verwacht 2026-06-25)
+
+VC0706-chipset, UART serieel. Werkt via commando/response-protocol.
+
+**Pin-toewijzing**
+- UART1 TX (Pico) → Camera RX
+- UART1 RX (Pico) → Camera TX
+- GPIO 4 = TX, GPIO 5 = RX (UART1)
+- Voeding: 3.3V of 5V (Vbus)
+
+**Eerste verificatie in REPL**
+
+```python
+from machine import UART, Pin
+import time
+uart = UART(1, baudrate=9600, tx=Pin(4), rx=Pin(5))
+time.sleep(1)
+# Reset-commando sturen
+uart.write(b'\x56\x00\x26\x00')
+time.sleep(2)
+print(uart.read())  # moet iets teruggeven
+```
+
+**Opnamevolgorde (VC0706-protocol)**
+1. Reset: `56 00 26 00`
+2. Freeze frame: `56 00 36 01 00`
+3. Beeldgrootte opvragen: `56 00 34 01 00`
+4. Bytes lezen in blokken van 512 bytes
+5. Frame hervatten: `56 00 36 01 03`
+
+**Valkuilen**
+- Camera TX → Pico RX, camera RX → Pico TX. Verwisseld = geen response.
+- Baud rate default 9600; verhoogbaar naar 38400 of 115200 met commando `56 00 24 03 01 XX XX`.
+- JPEG-data beginnen na de header; zoek op `FF D8` (JPEG start), eindigt op `FF D9`.
+- Supabase Storage heeft een maximale bestandsgrootte per gratis tier (~50 MB totaal).
+  Sla snapshots op als blob; overweeg te comprimeren op 160×120 of 320×240.
+
 ## Veelvoorkomende valkuilen
 
 - **COM-poort wisselt** na herstart van de Pico op Windows. `mpremote connect list`
