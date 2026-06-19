@@ -65,6 +65,14 @@ for _ in range(5):
     except Exception:
         time.sleep(2)
 laatste_licht = ldr.lees()
+
+# Kalibreer geluidssensor: meet ruisvloer en stel drempel dynamisch in
+ruis_samples = [geluid.meet_amplitude() for _ in range(10)]
+geluid_ruis = max(ruis_samples)
+geluid_drempel = max(GELUID_DREMPEL, geluid_ruis + 1000)
+print("Geluid ruisvloer:", geluid_ruis, "Drempel:", geluid_drempel)
+supabase.insert("events", {"type": "geluid_kalibratie", "payload": {"ruisvloer": geluid_ruis, "drempel": geluid_drempel}})
+
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
 
@@ -107,16 +115,16 @@ def verwerk_beweging():
 
 
 def verwerk_geluid():
-    global geluid_actief, laatste_event, laatste_geluid
+    global geluid_actief, laatste_event, laatste_geluid, geluid_drempel
     nu = time.ticks_ms()
     amplitude = geluid.meet_amplitude()
-    if amplitude > GELUID_DREMPEL:
-        laatste_geluid = nu
+    if amplitude > geluid_drempel:
         if not geluid_actief:
             geluid_actief = True
             laatste_event = "Geluid!"
             print("Event: sound_detected, amplitude:", amplitude)
             supabase.insert("events", {"type": "sound_detected", "payload": {"amplitude": amplitude}})
+        laatste_geluid = time.ticks_ms()  # reset na insert zodat debounce daarna begint
     elif geluid_actief and time.ticks_diff(nu, laatste_geluid) > GELUID_AFWEZIG_NA * 1000:
         geluid_actief = False
         laatste_event = "Geen geluid"

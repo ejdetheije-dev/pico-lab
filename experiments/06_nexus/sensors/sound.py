@@ -11,7 +11,7 @@ class Sound:
         self.adc = ADC(Pin(pin))
 
     def meet_amplitude(self):
-        """Geeft piek-tot-piek amplitude (ADC counts) over 50 samples."""
+        """Piek-tot-piek amplitude (ADC counts) over 50 samples."""
         laag = 65535
         hoog = 0
         for _ in range(50):
