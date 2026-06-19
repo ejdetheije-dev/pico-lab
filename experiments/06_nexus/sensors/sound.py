@@ -1,7 +1,7 @@
 from machine import ADC, Pin
 import time
 
-DREMPEL = 5500
+DREMPEL = 7500
 
 
 class Sound:

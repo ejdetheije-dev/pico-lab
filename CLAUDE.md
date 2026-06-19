@@ -249,6 +249,15 @@ Stand per 2026-06-19:
   - Env vars ingesteld via CLI: `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`.
   - `nexus-web/.env` toegevoegd aan `.gitignore` — credentials nooit in git.
   - Elke push naar `main` triggert automatisch een nieuwe Vercel-deploy.
+- **Geluid/beweging website-status fixes (2026-06-19):**
+  - Bug: `verwerk_beweging()` deed `return` bij `afstand is None` vóór de timeout-check,
+    waardoor `motion_absent` nooit werd gelogd als de sonar timeoutte.
+    Fix: timeout-check verplaatst naar buiten de `if afstand is not None` guard.
+  - Bug: na Pico-herstart was de website-toestand niet gesynchroniseerd (laatste
+    event in Supabase was nog `motion_detected`/`sound_detected`).
+    Fix: `main.py` logt bij opstart altijd `motion_absent` + `sound_absent`.
+  - Geluid DREMPEL bijgesteld voor Opstelling B: ruisvloer gemeten 6145–6401,
+    DREMPEL verhoogd van 5500 naar 7500.
 - **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg

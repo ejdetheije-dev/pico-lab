@@ -79,29 +79,31 @@ geluid_actief = False
 laatste_geluid = time.ticks_ms()
 lcd_scherm = 0
 
+# Reset website-toestand bij herstart
+supabase.insert("events", {"type": "motion_absent"})
+supabase.insert("events", {"type": "sound_absent"})
+
 def verwerk_beweging():
     global beweging_actief, laatste_beweging, laatste_event
     nu = time.ticks_ms()
     afstand = sonar.meet_afstand()
-    if afstand is None:
-        return
-    beweging = (baseline_afstand - afstand) > BEWEGING_DELTA
-    if beweging:
-        laatste_beweging = nu
-        if not beweging_actief:
-            beweging_actief = True
-            laatste_event = "Beweging!"
-            print("Event: motion_detected, afstand:", round(afstand, 1))
-            supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
-            if settings["pushover_enabled"]:
-                if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
-                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
-    elif beweging_actief:
-        if time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
-            beweging_actief = False
-            laatste_event = "Geen beweging"
-            print("Event: motion_absent")
-            supabase.insert("events", {"type": "motion_absent"})
+    if afstand is not None:
+        beweging = (baseline_afstand - afstand) > BEWEGING_DELTA
+        if beweging:
+            laatste_beweging = nu
+            if not beweging_actief:
+                beweging_actief = True
+                laatste_event = "Beweging!"
+                print("Event: motion_detected, afstand:", round(afstand, 1))
+                supabase.insert("events", {"type": "motion_detected", "payload": {"afstand_cm": round(afstand, 1)}})
+                if settings["pushover_enabled"]:
+                    if pushover("Beweging gedetecteerd (" + str(round(afstand, 1)) + " cm)"):
+                        supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": "Beweging gedetecteerd"}})
+    if beweging_actief and time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
+        beweging_actief = False
+        laatste_event = "Geen beweging"
+        print("Event: motion_absent")
+        supabase.insert("events", {"type": "motion_absent"})
 
 
 def verwerk_geluid():

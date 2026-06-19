@@ -207,12 +207,14 @@ real-time helemaal niet voor die tabel.
 - **Notificatie logging:** elke verstuurde notificatie staat als `pushover_sent` event
   in de `events` tabel — zichtbaar in Supabase dashboard.
 
-## MAX4466 valkuilen (bewezen 2026-06-12)
+## MAX4466 valkuilen (bewezen 2026-06-12/19)
 
 - **GPIO-conflict LDR/geluid:** MAX4466 OUT op GPIO 26 onderdrukt de LDR volledig
   (MAX4466 trekt pin naar VCC/2 ≈ 32800 raw = constant ~50%). Altijd GPIO 27 gebruiken.
-- **Drempel kalibreren:** ruisvloer ~5600–6400, zachte klap ~7000–8000, harde klap ~9000–10000.
-  Start met DREMPEL=7000. Verlaag naar 6800 bij te weinig gevoeligheid.
+- **Drempel kalibreren per opstelling:** ruisvloer verschilt per omgeving en gain-instelling.
+  Altijd `tools/test_max4466.py` draaien vóór je een DREMPEL instelt.
+  - Opstelling A (breadboard): ruisvloer ~2000–3000, DREMPEL = 7000.
+  - Opstelling B (breakout board): ruisvloer ~6145–6401, DREMPEL = 7500.
 - **Loop-snelheid:** `time.sleep(1)` geeft maar 4.5% kans een klap te vangen. Gebruik
   `time.sleep_ms(100)` in de hoofdlus voor 10x hogere meetfrequentie.
 
@@ -345,6 +347,42 @@ print(uart.read())  # moet iets teruggeven
 - JPEG-data beginnen na de header; zoek op `FF D8` (JPEG start), eindigt op `FF D9`.
 - Supabase Storage heeft een maximale bestandsgrootte per gratis tier (~50 MB totaal).
   Sla snapshots op als blob; overweeg te comprimeren op 160×120 of 320×240.
+
+## Website-toestand synchroniseren bij herstart (bewezen 2026-06-19)
+
+Na een Pico-herstart weet de website niet dat de toestand gereset is — de laatste
+`motion_detected`/`sound_detected` event in Supabase blijft staan, website toont "JA".
+
+**Oplossing:** log bij opstart altijd initiële absent-events:
+
+```python
+# Na WiFi-verbinding en initialisatie, vóór de hoofdlus:
+supabase.insert("events", {"type": "motion_absent"})
+supabase.insert("events", {"type": "sound_absent"})
+```
+
+## Bewegingsdetectie: `afstand is None` blokkeert timeout (bewezen 2026-06-19)
+
+Bug: als `sonar.meet_afstand()` `None` teruggeeft, deed de originele code `return` vóór
+de 30s-timeout check. `motion_absent` werd daardoor nooit gelogd als de sensor timeoutte.
+
+**Fix:** timeout-check buiten de `if afstand is not None` guard plaatsen:
+
+```python
+def verwerk_beweging():
+    nu = time.ticks_ms()
+    afstand = sonar.meet_afstand()
+    if afstand is not None:
+        beweging = (baseline_afstand - afstand) > BEWEGING_DELTA
+        if beweging:
+            laatste_beweging = nu
+            if not beweging_actief:
+                ...log motion_detected...
+    # timeout check altijd uitvoeren, ook bij None
+    if beweging_actief and time.ticks_diff(nu, laatste_beweging) > AFWEZIG_NA * 1000:
+        beweging_actief = False
+        ...log motion_absent...
+```
 
 ## Veelvoorkomende valkuilen
 
