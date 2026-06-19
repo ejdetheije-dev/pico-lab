@@ -224,7 +224,7 @@ while True:
     if time.ticks_diff(time.ticks_ms(), laatste_lcd_update) >= 4000:
         if lcd_scherm == 0:
             r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% L:" + str(laatste_licht)
-            r2 = "Licht:" + str(laatste_licht) + "%"
+            r2 = "Geluid: " + ("JA!" if geluid_actief else "nee")
         else:
             r1 = "Beweging: " + ("JA!" if beweging_actief else "nee")
             r2 = laatste_event
