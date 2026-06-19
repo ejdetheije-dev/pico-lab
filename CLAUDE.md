@@ -256,8 +256,14 @@ Stand per 2026-06-19:
   - Bug: na Pico-herstart was de website-toestand niet gesynchroniseerd (laatste
     event in Supabase was nog `motion_detected`/`sound_detected`).
     Fix: `main.py` logt bij opstart altijd `motion_absent` + `sound_absent`.
-  - Geluid DREMPEL bijgesteld voor Opstelling B: ruisvloer gemeten 6145–6401,
-    DREMPEL verhoogd van 5500 naar 7500.
+  - Bug: `supabase.insert("sound_detected")` blokkeert ~10s, daarna was `time.ticks_diff`
+    al > 5s → `sound_absent` volgde direct. Fix: `laatste_geluid` resetten NA de insert.
+  - Dynamische geluidskalibratie bij opstart: meet 10 samples ruisvloer, stel drempel
+    in op `max(GELUID_DREMPEL, ruis + 1000)`. Logt `geluid_kalibratie` event naar Supabase.
+  - DREMPEL verhoogd naar 8000 (ruisvloer laptop 6193–7073, min klap 8242).
+  - **Oplader-beperking:** goedkope USB-opladers geven ruisvloer ~10690 (ADC-ruis van
+    switching PSU), hoger dan klapamplitude (~8242–10403). Geluiddetectie vereist
+    kwalitatieve voeding: laptop USB, USB powerbank of kwaliteitsoplader (Anker, Apple).
 - **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
