@@ -244,7 +244,7 @@ Stand per 2026-06-19:
   - Bij `poll_interval_s = 10`: ~1 GB/jaar — overschrijdt de gratis tier.
   - Verlaag het poll-interval niet onder 30 seconden zonder data retentie (PICO-47) actief te hebben.
 - **nexus-web gedeployed op Vercel (2026-06-19):**
-  - URL: https://nexus-6m1dk8ewv-ejdetheijes-projects.vercel.app
+  - URL: https://nexus-ejdetheije.vercel.app (alias: nexus-6m1dk8ewv-ejdetheijes-projects.vercel.app)
   - Vercel project: `nexus-web` op account `ejdetheijes-projects`.
   - Env vars ingesteld via CLI: `VITE_SUPABASE_URL` en `VITE_SUPABASE_ANON_KEY`.
   - `nexus-web/.env` toegevoegd aan `.gitignore` — credentials nooit in git.
