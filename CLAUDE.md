@@ -233,7 +233,13 @@ Stand per 2026-06-19:
 - **Nexus 9/9 test op breadboard (2026-06-19):** alle componenten 100% OK.
 - **Opstelling B volledig opgebouwd (2026-06-19):** LCD, DHT11, LDR, MAX4466, buzzer, HC-SR04, relay aangesloten op Freenove breakout board. 7/7 getest en werkend. BMP180 bewust weggelaten.
 - **main.py aangepast voor Opstelling B:** BMP180 verwijderd, LCD-scherm toont licht i.p.v. druk. Geluid DREMPEL bijgesteld naar 5500. Website toont geen luchtdruk meer.
-- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
+- **PICO-47 aangemaakt (2026-06-19):** Data retentie — automatisch verwijderen van oude sensor_readings en events via pg_cron in Supabase.
+- **Supabase gratis tier limiet: 500 MB database.**
+  - Bij `poll_interval_s = 60`: 3 sensorwaarden/min × 1440 = ~4.320 rijen/dag → ~170 MB/jaar. Ruim binnen limiet.
+  - Bij `poll_interval_s = 30`: ~340 MB/jaar — nog net goed.
+  - Bij `poll_interval_s = 10`: ~1 GB/jaar — overschrijdt de gratis tier.
+  - Verlaag het poll-interval niet onder 30 seconden zonder data retentie (PICO-47) actief te hebben.
+- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), PICO-47 (data retentie), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
