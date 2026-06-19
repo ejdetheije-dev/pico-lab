@@ -233,7 +233,11 @@ Stand per 2026-06-19:
 - **Nexus 9/9 test op breadboard (2026-06-19):** alle componenten 100% OK.
 - **Opstelling B volledig opgebouwd (2026-06-19):** LCD, DHT11, LDR, MAX4466, buzzer, HC-SR04, relay aangesloten op Freenove breakout board. 7/7 getest en werkend. BMP180 bewust weggelaten.
 - **main.py aangepast voor Opstelling B:** BMP180 verwijderd, LCD-scherm toont licht i.p.v. druk. Geluid DREMPEL bijgesteld naar 5500. Website toont geen luchtdruk meer.
-- **PICO-47 aangemaakt (2026-06-19):** Data retentie — automatisch verwijderen van oude sensor_readings en events via pg_cron in Supabase.
+- **PICO-47 afgerond (2026-06-19):** Data retentie via pg_cron in Supabase.
+  - `tools/retention.sql`: voer eenmalig uit in Supabase Dashboard > SQL Editor.
+  - Voegt `created_at` toe aan `events` tabel (als ontbreekt), schakelt `pg_cron` in,
+    plant dagelijkse cleanup om 03:00 UTC voor beide tabellen.
+  - Retentieperiode: 365 dagen voor `sensor_readings` en `events`.
 - **Supabase gratis tier limiet: 500 MB database.**
   - Bij `poll_interval_s = 60`: 3 sensorwaarden/min × 1440 = ~4.320 rijen/dag → ~170 MB/jaar. Ruim binnen limiet.
   - Bij `poll_interval_s = 30`: ~340 MB/jaar — nog net goed.
