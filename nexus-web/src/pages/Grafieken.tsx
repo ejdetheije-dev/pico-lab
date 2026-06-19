@@ -19,7 +19,6 @@ const SENSOREN: SensorConf[] = [
   { sensor: 'dht11_temp',      label: 'Temperatuur',      unit: '°C',  kleur: '#f97316', domain: [(d: number) => Math.min(0, d), 'auto'] },
   { sensor: 'dht11_humidity',  label: 'Luchtvochtigheid', unit: '%',   kleur: '#3b82f6' },
   { sensor: 'ldr_light',       label: 'Licht',            unit: '%',   kleur: '#eab308' },
-  { sensor: 'bmp180_pressure', label: 'Luchtdruk',        unit: 'hPa', kleur: '#8b5cf6' },
 ]
 
 const EVENT_FILTERS = [

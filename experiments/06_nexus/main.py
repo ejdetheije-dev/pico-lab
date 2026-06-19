@@ -5,7 +5,6 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
-from sensors.bmp180 import BMP180
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -51,7 +50,6 @@ sonar = HCSR04()
 ldr = LDR()
 geluid = Sound()
 lcd = LCD()
-bmp180 = BMP180(lcd.i2c)
 buzzer = Buzzer()
 ventilator = Relay(21)
 
@@ -67,7 +65,6 @@ for _ in range(5):
     except Exception:
         time.sleep(2)
 laatste_licht = ldr.lees()
-laatste_druk = round(bmp180.lees_druk(), 1)
 lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
 print("Nexus gestart")
 
@@ -194,8 +191,7 @@ while True:
             except Exception:
                 print("DHT11 fout, gebruik laatste waarde")
         laatste_licht = ldr.lees()
-        laatste_druk = round(bmp180.lees_druk(), 1)
-        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht, "Druk:", laatste_druk)
+        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht)
         supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
         verwerk_commands()
         verwerk_beweging()
@@ -208,7 +204,6 @@ while True:
         verwerk_commands()
         verwerk_beweging()
         verwerk_geluid()
-        supabase.insert("sensor_readings", {"sensor": "bmp180_pressure", "value": laatste_druk})
         laatste_sensor_log = time.ticks_ms()
         laatste_lcd_update = 0  # forceer direct LCD refresh
 
@@ -228,7 +223,7 @@ while True:
     # LCD roteren: scherm 0 = sensoren, scherm 1 = beweging — elke 4s wisselen
     if time.ticks_diff(time.ticks_ms(), laatste_lcd_update) >= 4000:
         if lcd_scherm == 0:
-            r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% " + str(int(laatste_druk)) + "h"
+            r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% L:" + str(laatste_licht)
             r2 = "Licht:" + str(laatste_licht) + "%"
         else:
             r1 = "Beweging: " + ("JA!" if beweging_actief else "nee")

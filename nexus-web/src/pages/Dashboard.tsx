@@ -13,7 +13,6 @@ const SENSOR_META: Record<string, { label: string; unit: string }> = {
   dht11_temp: { label: 'Temperatuur', unit: ' °C' },
   dht11_humidity: { label: 'Luchtvochtigheid', unit: '%' },
   ldr_light: { label: 'Licht', unit: '%' },
-  bmp180_pressure: { label: 'Luchtdruk', unit: ' hPa' },
 }
 
 async function fetchLatest(): Promise<Record<string, Reading>> {
@@ -117,8 +116,6 @@ export default function Dashboard() {
 
   const nexusTemp = readings['dht11_temp']?.value ?? null
   const nexusHum = readings['dht11_humidity']?.value ?? null
-  const nexusPres = readings['bmp180_pressure']?.value ?? null
-
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <h1 className="text-xl font-semibold mb-6">Nexus</h1>
@@ -146,7 +143,6 @@ export default function Dashboard() {
       <div className="grid grid-cols-3 gap-4 max-w-lg">
         <WeatherCard label="Temperatuur" outdoor={weather.temperature} nexus={nexusTemp} unit="°C" />
         <WeatherCard label="Vochtigheid" outdoor={weather.humidity} nexus={nexusHum} unit="%" />
-        <WeatherCard label="Luchtdruk" outdoor={weather.pressure} nexus={nexusPres} unit=" hPa" />
       </div>
     </div>
   )

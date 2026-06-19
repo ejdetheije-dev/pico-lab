@@ -10,6 +10,46 @@ op de Pico, en wordt vanaf een Windows-laptop geupload via `mpremote`.
 Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 één wetenschappelijke vraag, één `main.py` die werkt zodra je hem upload.
 
+## Twee opstellingen — ALTIJD vragen welke
+
+Er zijn twee actieve Pico-opstellingen. **Vraag bij twijfel altijd welke opstelling
+we aan het werken zijn** voordat je pin-nummers, testscripts of verbindingen noemt.
+
+### Opstelling A — Breadboard MVP
+
+- **Hardware:** Pico 2W direct in breadboard, losse jumperdraden
+- **Gebruik:** prototypen, debuggen, component-tests
+- **Componenten:** LCD (GPIO 0/1/Vbus), DHT11 (GPIO 16), HC-SR04 (GPIO 17/18),
+  LDR (GPIO 26 + 1kΩ), BMP180 (I2C0), MAX4466 (GPIO 27), buzzer (GPIO 9),
+  relay (GPIO 21)
+- **Status:** 9/9 componenten getest en werkend (2026-06-19)
+- **Pin-referentie:** GPIO-nummers direct, bijv. "GPIO 9" of breadboard-sticker
+
+### Opstelling B — Breakout board (Freenove + printplaat)
+
+- **Hardware:** Pico 2W in Freenove breakout board, componenten via
+  female-female kabels op schroefklemmen L1–L24 en R1–R24
+- **Gebruik:** permanente/vaste opstelling
+- **Componenten aangesloten (2026-06-19):**
+  - DHT11 → R20 (GPIO 16), grijs
+  - LDR → R10 (GPIO 26), wit
+  - MAX4466 → R9 (GPIO 27), lichtgrijs
+  - Buzzer → L12 (GPIO 9), geel
+  - LCD SDA → L1 (GPIO 0), oranje
+  - LCD SCL → L2 (GPIO 1), geel
+  - LCD VDD → R1 (VBUS 5V), rood
+  - LCD GND → R3 (GND), bruin
+  - HC-SR04 VCC → R2 (VSYS 5V), blauw
+  - HC-SR04 Trig → R19 (GPIO 17), roze
+  - HC-SR04 Echo → R17 (GPIO 18), geel
+  - HC-SR04 GND → R8 of R13 (GND), oranje
+  - 3V3 sensoren → R5 (3V3), bruin
+  - GND sensoren → R3/R8 (GND), zwart
+  - Relay kanaal 2 → R14 (GPIO 21), IN2-draad
+- **Niet op opstelling B:** BMP180
+- **Status:** alle 7 aangesloten componenten getest en werkend (7/9, 2 FAILs = BMP180 niet aangesloten)
+- **Pin-referentie:** altijd L/R-nummers noemen, bijv. "L12 (GPIO 9)"
+
 ## Huidige status
 
 Stand per 2026-06-19:
@@ -191,7 +231,8 @@ Stand per 2026-06-19:
   - Aansluiting via breakout board gaf problemen (connectieproblemen en pin-verwarring).
   - Besluit: nieuwe printplaat maken met juiste breakout-board mapping als referentie.
 - **Nexus 9/9 test op breadboard (2026-06-19):** alle componenten 100% OK.
-- **Op breakout board met nieuwe Pico (2026-06-19):** DHT11, LDR, MAX4466, buzzer werkend (4/4 aangesloten componenten OK).
+- **Opstelling B volledig opgebouwd (2026-06-19):** LCD, DHT11, LDR, MAX4466, buzzer, HC-SR04, relay aangesloten op Freenove breakout board. 7/7 getest en werkend. BMP180 bewust weggelaten.
+- **main.py aangepast voor Opstelling B:** BMP180 verwijderd, LCD-scherm toont licht i.p.v. druk. Geluid DREMPEL bijgesteld naar 5500. Website toont geen luchtdruk meer.
 - **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
