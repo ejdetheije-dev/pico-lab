@@ -12,7 +12,7 @@ Iedere `experiments/NN_naam/` map staat op zichzelf: één duidelijk leerdoel,
 
 ## Huidige status
 
-Stand per 2026-06-15:
+Stand per 2026-06-19:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
   Oude Pico (COM8) niet meer in gebruik voor Nexus.
@@ -181,7 +181,18 @@ Stand per 2026-06-15:
   - Arriveert 2026-06-25. Interface: UART TTL, 9600 baud.
   - Voorgestelde pins: UART1 TX → GPIO 4, RX → GPIO 5.
   - Voorziene trigger: beweging (HC-SR04) of geluid (MAX4466) → snapshot.
-- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25).
+- **Freenove breakout board pin-mapping vastgesteld (2026-06-19):**
+  - Labels L1–L24 (links) en R1–R24 (rechts), genummerd van boven (ver van USB) naar beneden.
+  - L1 = GPIO 0, R1 = VBUS. L-nummers inclusief GND-rijen (L3/L8/L13/L18 = GND).
+  - GPIO 9 (buzzer) = L12, GPIO 16 (DHT11) = R20, GPIO 26 (LDR) = R10, GPIO 27 (mic) = R9.
+  - Volledige tabel toegevoegd onder "Freenove Breakout Board — pin-mapping".
+- **Printplaat gesoldeerd (2026-06-19):**
+  - Alle componenten op perfboard gesoldeerd en afzonderlijk getest op breadboard: OK.
+  - Aansluiting via breakout board gaf problemen (connectieproblemen en pin-verwarring).
+  - Besluit: nieuwe printplaat maken met juiste breakout-board mapping als referentie.
+- **Nexus 9/9 test op breadboard (2026-06-19):** alle componenten 100% OK.
+- **Op breakout board met nieuwe Pico (2026-06-19):** DHT11, LDR, MAX4466, buzzer werkend (4/4 aangesloten componenten OK).
+- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
@@ -405,6 +416,76 @@ Linkerkant (van USB-connector naar beneden):
 
 GND-pinnen zitten op beide kanten verspreid — de blauwe rail op het breadboard
 is de GND-rail.
+
+### Freenove Breakout Board — pin-mapping
+
+**Belangrijk onderscheid:**
+- **Breadboard** = bord met losse jumperdraden, direct in Pico-pinnen gestoken
+- **Breakout board** = Freenove board met schroefklemmen L1–L24 (links) en R1–R24 (rechts)
+
+Het breakout board nummert van **boven (ver van USB) naar beneden (bij USB)**.
+L1 en R1 zitten bovenaan, L24 en R24 onderaan bij de USB-connector.
+
+**Linkerkolom (L1–L20 = GPIO-kant):**
+
+| Label | GPIO |
+|-------|------|
+| L1 | GPIO 0 |
+| L2 | GPIO 1 |
+| L3 | GND |
+| L4 | GPIO 2 |
+| L5 | GPIO 3 |
+| L6 | GPIO 4 |
+| L7 | GPIO 5 |
+| L8 | GND |
+| L9 | GPIO 6 |
+| L10 | GPIO 7 |
+| L11 | GPIO 8 |
+| **L12** | **GPIO 9** |
+| L13 | GND |
+| L14 | GPIO 10 |
+| L15 | GPIO 11 |
+| L16 | GPIO 12 |
+| L17 | GPIO 13 |
+| L18 | GND |
+| L19 | GPIO 14 |
+| L20 | GPIO 15 |
+
+**Rechterkolom (R1–R20 = voeding + ADC-kant):**
+
+| Label | Functie |
+|-------|---------|
+| R1 | VBUS (5V) |
+| R2 | VSYS |
+| R3 | GND |
+| R4 | 3V3_EN |
+| **R5** | **3V3 OUT** |
+| R6 | ADC_VREF |
+| R7 | GPIO 28 |
+| R8 | GND |
+| **R9** | **GPIO 27** |
+| **R10** | **GPIO 26** |
+| R11 | RUN |
+| R12 | GPIO 22 |
+| R13 | GND |
+| R14 | GPIO 21 |
+| R15 | GPIO 20 |
+| R16 | GPIO 19 |
+| R17 | GPIO 18 |
+| R18 | GND |
+| R19 | GPIO 17 |
+| **R20** | **GPIO 16** |
+
+**Nexus-componenten op het breakout board:**
+
+| Component | Kleur | Label |
+|-----------|-------|-------|
+| Buzzer signaal | geel | L12 |
+| DHT11 data | grijs | R20 |
+| Lichtsensor (LDR) | wit | R10 |
+| Microfoon (MAX4466) | lichtgrijs | R9 |
+| 3V3 voeding | bruin | R5 |
+| GND | zwart | R3 of R8 |
 
 ### Sensoren (Freenove kit)
 

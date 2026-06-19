@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-09) — experiment 06 Nexus actief
+## Status (2026-06-19) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -14,13 +14,12 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 05 solar tracker       | ja   | nee     | ja     | PICO-22   |
 | 06 nexus               | ja   | ja      | ja     | PICO-25   |
 
-Nieuwe Pico 2W op **COM9** met MicroPython (voorgeïnstalleerd). Board is
-leeggemaakt — Nexus-hardware aangesloten: LCD, DHT11, HC-SR04, LDR, buzzer.
-PICO-26 t/m PICO-34 en PICO-36 zijn Gereed. PICO-35 overgeslagen (geluidssensor
-niet gevonden — vervangen door PICO-42 met KY-038). PICO-41 geannuleerd (BMP180
-reageert niet op I2C). Nexus netwerkstabiliteit verbeterd op 2026-06-09: retry-logica,
-aparte headers GET/POST, command poll elke 10s. Volgende stappen: PICO-37
-(poll interval via website), PICO-42 + PICO-43 (KY-038 + relaimodule, arriveert 2026-06-11).
+Pico 2W op **COM9**. Nexus breadboard 9/9 componenten getest en werkend.
+Freenove breakout board pin-mapping definitief vastgesteld (L1=GPIO0, R1=VBUS,
+L12=GPIO9, R20=GPIO16, R10=GPIO26, R9=GPIO27). Op breakout board getest:
+DHT11, LDR, MAX4466, buzzer — allemaal OK. Eerste printplaat gemaakt maar
+vervangen door nieuwe (betere referentie beschikbaar). Volgende stappen:
+PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
