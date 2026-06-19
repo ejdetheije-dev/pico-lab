@@ -2,3 +2,4 @@ config.py
 **/data/*.csv
 __pycache__/
 *.pyc
+nexus-web/.env
