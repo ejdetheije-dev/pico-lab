@@ -5,6 +5,7 @@ const DEFAULTS = {
   poll_interval_s: 60,
   temp_alert_threshold: 30,
   pushover_enabled: false,
+  lcd_backlight: true,
 }
 
 async function fetchSettings() {
@@ -16,6 +17,7 @@ async function fetchSettings() {
     poll_interval_s: map['poll_interval_s'] ? Number(map['poll_interval_s']) : DEFAULTS.poll_interval_s,
     temp_alert_threshold: map['temp_alert_threshold'] ? Number(map['temp_alert_threshold']) : DEFAULTS.temp_alert_threshold,
     pushover_enabled: map['pushover_enabled'] !== undefined ? map['pushover_enabled'] === 'true' : DEFAULTS.pushover_enabled,
+    lcd_backlight: map['lcd_backlight'] !== undefined ? map['lcd_backlight'] === 'true' : DEFAULTS.lcd_backlight,
   }
 }
 
@@ -23,6 +25,7 @@ export default function Settings() {
   const [pollInterval, setPollInterval] = useState(DEFAULTS.poll_interval_s)
   const [tempDrempel, setTempDrempel] = useState(DEFAULTS.temp_alert_threshold)
   const [pushoverEnabled, setPushoverEnabled] = useState(DEFAULTS.pushover_enabled)
+  const [lcdBacklight, setLcdBacklight] = useState(DEFAULTS.lcd_backlight)
   const [bezig, setBezig] = useState(false)
   const [status, setStatus] = useState('')
 
@@ -31,6 +34,7 @@ export default function Settings() {
       setPollInterval(s.poll_interval_s)
       setTempDrempel(s.temp_alert_threshold)
       setPushoverEnabled(s.pushover_enabled)
+      setLcdBacklight(s.lcd_backlight)
     })
   }, [])
 
@@ -43,6 +47,7 @@ export default function Settings() {
         { key: 'poll_interval_s', value: pollInterval },
         { key: 'temp_alert_threshold', value: tempDrempel },
         { key: 'pushover_enabled', value: pushoverEnabled ? 'true' : 'false' },
+        { key: 'lcd_backlight', value: lcdBacklight ? 'true' : 'false' },
       ],
       { onConflict: 'key' }
     )
@@ -102,6 +107,22 @@ export default function Settings() {
             <span
               className={`inline-block w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
                 pushoverEnabled ? 'translate-x-6' : 'translate-x-1'
+              }`}
+            />
+          </button>
+        </div>
+
+        <div className="flex items-center justify-between">
+          <label className="text-sm text-gray-400">LCD backlight</label>
+          <button
+            onClick={() => setLcdBacklight(v => !v)}
+            className={`inline-flex items-center w-11 h-6 rounded-full transition-colors duration-200 ${
+              lcdBacklight ? 'bg-blue-600' : 'bg-gray-600'
+            }`}
+          >
+            <span
+              className={`inline-block w-4 h-4 bg-white rounded-full shadow transition-transform duration-200 ${
+                lcdBacklight ? 'translate-x-6' : 'translate-x-1'
               }`}
             />
           </button>

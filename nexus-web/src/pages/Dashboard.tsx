@@ -32,6 +32,21 @@ async function fetchLatest(): Promise<Record<string, Reading>> {
   return latest
 }
 
+async function fetchLastSeen(): Promise<string | null> {
+  const { data, error } = await supabase
+    .from('sensor_readings')
+    .select('created_at')
+    .order('id', { ascending: false })
+    .limit(1)
+  if (error) console.error('last_seen:', error)
+  return data?.[0]?.created_at ?? null
+}
+
+async function fetchPollInterval(): Promise<number> {
+  const { data } = await supabase.from('settings').select('value').eq('key', 'poll_interval_s').limit(1)
+  return data?.[0]?.value ? Number(data[0].value) : 60
+}
+
 async function fetchStatus(): Promise<Status> {
   const [{ data: m }, { data: s }] = await Promise.all([
     supabase.from('events').select('type')
@@ -56,6 +71,30 @@ async function fetchWeather(): Promise<Weather> {
     humidity: c?.relative_humidity_2m ?? null,
     pressure: c?.surface_pressure ?? null,
   }
+}
+
+function OnlineBadge({ lastSeen, pollInterval, now }: {
+  lastSeen: string | null
+  pollInterval: number
+  now: number
+}) {
+  if (!lastSeen) {
+    return (
+      <div className="flex items-center gap-2 text-sm text-gray-500">
+        <span className="w-2.5 h-2.5 rounded-full bg-gray-600" />
+        Onbekend
+      </div>
+    )
+  }
+  const drempelMs = Math.max(pollInterval * 2, 60) * 1000
+  const online = now - new Date(lastSeen).getTime() < drempelMs
+  return (
+    <div className="flex items-center gap-2 text-sm">
+      <span className={`w-2.5 h-2.5 rounded-full ${online ? 'bg-green-500' : 'bg-red-500'}`} />
+      <span className={online ? 'text-green-400' : 'text-red-400'}>{online ? 'Online' : 'Offline'}</span>
+      <span className="text-gray-500">· laatst gezien {new Date(lastSeen).toLocaleTimeString('nl-NL')}</span>
+    </div>
+  )
 }
 
 function StatusCard({ label, actief }: { label: string; actief: boolean | null }) {
@@ -95,15 +134,22 @@ export default function Dashboard() {
   const [readings, setReadings] = useState<Record<string, Reading>>({})
   const [status, setStatus] = useState<Status>({ beweging: null, geluid: null })
   const [weather, setWeather] = useState<Weather>({ temperature: null, humidity: null, pressure: null })
+  const [lastSeen, setLastSeen] = useState<string | null>(null)
+  const [pollInterval, setPollInterval] = useState(60)
+  const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
     fetchLatest().then(setReadings)
     fetchStatus().then(setStatus)
     fetchWeather().then(setWeather)
+    fetchLastSeen().then(setLastSeen)
+    fetchPollInterval().then(setPollInterval)
 
     const sensorInterval = setInterval(() => {
       fetchLatest().then(setReadings)
       fetchStatus().then(setStatus)
+      fetchLastSeen().then(setLastSeen)
+      setNow(Date.now())
     }, 5000)
 
     const weatherInterval = setInterval(() => fetchWeather().then(setWeather), 60_000)
@@ -118,7 +164,10 @@ export default function Dashboard() {
   const nexusHum = readings['dht11_humidity']?.value ?? null
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
-      <h1 className="text-xl font-semibold mb-6">Nexus</h1>
+      <div className="flex items-center justify-between mb-6">
+        <h1 className="text-xl font-semibold">Nexus</h1>
+        <OnlineBadge lastSeen={lastSeen} pollInterval={pollInterval} now={now} />
+      </div>
 
       <div className="grid grid-cols-2 gap-4 max-w-sm mb-8">
         {Object.entries(SENSOR_META).map(([key, meta]) => {

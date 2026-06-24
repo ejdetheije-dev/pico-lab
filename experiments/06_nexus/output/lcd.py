@@ -17,10 +17,20 @@ class LCD:
     def __init__(self, sda=0, scl=1, addr=0x27):
         self.i2c = I2C(0, sda=Pin(sda), scl=Pin(scl), freq=400_000)
         self.addr = addr
+        self.backlight = True
         self._init()
 
     def _write(self, data):
-        self.i2c.writeto(self.addr, bytes([data | BACKLIGHT]))
+        if self.backlight:
+            data |= BACKLIGHT
+        else:
+            data &= ~BACKLIGHT
+        self.i2c.writeto(self.addr, bytes([data]))
+
+    def set_backlight(self, aan):
+        """Zet de backlight aan of uit zonder de getoonde tekst te wissen."""
+        self.backlight = aan
+        self._write(0x00)
 
     def _pulse(self, data):
         self._write(data | ENABLE)

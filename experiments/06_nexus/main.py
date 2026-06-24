@@ -23,6 +23,7 @@ def laad_settings():
         "poll_interval_s": int(s.get("poll_interval_s", 60)),
         "temp_alert_threshold": int(s.get("temp_alert_threshold", 30)),
         "pushover_enabled": s.get("pushover_enabled", "false") == "true",
+        "lcd_backlight": s.get("lcd_backlight", "true") == "true",
     }
 
 
@@ -50,6 +51,7 @@ sonar = HCSR04()
 ldr = LDR()
 geluid = Sound()
 lcd = LCD()
+lcd.set_backlight(settings["lcd_backlight"])
 buzzer = Buzzer()
 ventilator = Relay(21)
 
@@ -179,6 +181,7 @@ def verwerk_commands():
         elif type_ == "set_setting":
             settings = laad_settings()
             poll_interval = settings["poll_interval_s"]
+            lcd.set_backlight(settings["lcd_backlight"])
             print("Settings herladen: poll_interval_s =", poll_interval)
         supabase.mark_executed(cmd["id"])
     laatste_command_poll = time.ticks_ms()
