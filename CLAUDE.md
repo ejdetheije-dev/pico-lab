@@ -264,6 +264,23 @@ Stand per 2026-06-19:
   - **Oplader-beperking:** goedkope USB-opladers geven ruisvloer ~10690 (ADC-ruis van
     switching PSU), hoger dan klapamplitude (~8242–10403). Geluiddetectie vereist
     kwalitatieve voeding: laptop USB, USB powerbank of kwaliteitsoplader (Anker, Apple).
+- **Dashboard online/offline-status toegevoegd (2026-06-24):**
+  - `OnlineBadge` op het Dashboard toont groen/Online of rood/Offline op basis van
+    de timestamp van de laatste `sensor_readings`-insert.
+  - Drempel is dynamisch: `max(2 x poll_interval_s, 60s)` — past zich aan als het
+    poll-interval in Settings wijzigt, geen hardcoded timeout.
+- **LCD backlight aan/uit-schakelaar toegevoegd (2026-06-24):**
+  - `output/lcd.py`: `set_backlight(aan)` zet/wist de backlight-bit per I2C-write
+    zonder de getoonde tekst te wissen (EN blijft laag, geen LCD-commando-latch).
+  - Nieuwe setting `lcd_backlight` (default aan), toegepast bij opstart en bij
+    het `set_setting`-command — reageert dus ook live vanaf de website.
+  - Settings-pagina: toggle "LCD backlight", zelfde patroon als Pushover-schakelaar.
+- **Humidity-vergelijkingsscript toegevoegd:** `tools/compare_humidity.py` vergelijkt
+  alle (of de laatste N) `dht11_humidity`-metingen met Open-Meteo buitenvochtigheid
+  (Voorschoten) op het dichtstbijzijnde uur. Conclusie 2026-06-24: geen systematische
+  bias over de hele dataset (gemiddeld verschil -3.6pp), maar grote per-meting
+  afwijking (~18pp) omdat Nexus binnen meet en Open-Meteo buiten — dit is verwacht
+  gedrag, geen sensorfout.
 - **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
