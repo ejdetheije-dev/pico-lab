@@ -59,9 +59,13 @@ function formatTooltip(ts: number): string {
 }
 
 function merge(binnen: Punt[], buiten: Punt[]): MergePunt[] {
+  if (binnen.length === 0) return []
+  const minTs = binnen[0].ts
+  const maxTs = binnen[binnen.length - 1].ts
   const map = new Map<number, MergePunt>()
   for (const p of binnen) map.set(p.ts, { ts: p.ts, binnen: p.waarde })
   for (const p of buiten) {
+    if (p.ts < minTs || p.ts > maxTs) continue
     const entry = map.get(p.ts) ?? { ts: p.ts }
     map.set(p.ts, { ...entry, buiten: p.waarde })
   }
