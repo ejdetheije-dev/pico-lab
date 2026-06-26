@@ -205,7 +205,7 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', '
                 strokeDasharray="4 2"
                 dot={false}
                 isAnimationActive={false}
-                connectNulls={false}
+                connectNulls={true}
               />
             )}
           </LineChart>
