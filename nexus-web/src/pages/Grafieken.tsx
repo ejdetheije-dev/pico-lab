@@ -104,7 +104,7 @@ async function fetchBuitenHistorie(dagEnTerug: number): Promise<{ temp: Punt[]; 
   const res = await fetch(
     `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
     `&hourly=temperature_2m,relative_humidity_2m` +
-    `&past_days=${dagEnTerug}&forecast_days=0&timezone=Europe/Amsterdam`
+    `&past_days=${dagEnTerug}&forecast_days=1&timezone=Europe/Amsterdam`
   )
   const json = await res.json()
   const now = Date.now()
