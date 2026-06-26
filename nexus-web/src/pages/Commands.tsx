@@ -124,7 +124,7 @@ export default function Commands() {
 
         <h2 className="text-sm text-gray-400 uppercase tracking-wide">Firmware</h2>
         <ActionButton
-          label="OTA update"
+          label="Software update"
           status={ota.status}
           color="blue"
           onClick={() => ota.stuur('ota_update')}

@@ -187,7 +187,7 @@ def verwerk_commands():
             time.sleep(10)
             laatste_lcd_update = time.ticks_ms()
         elif type_ == "ota_update":
-            lcd.toon("OTA update", "bezig...")
+            lcd.toon("Software update", "bezig...")
             import ota
             ota.check_en_update(supabase)
             lcd.toon("OTA: actueel", "geen update")
