@@ -27,8 +27,10 @@ def laad_settings():
     }
 
 
+wlan = network.WLAN(network.STA_IF)
+
+
 def verbind_wifi():
-    wlan = network.WLAN(network.STA_IF)
     wlan.active(True)
     wlan.connect(WIFI_SSID, WIFI_PASSWORD)
     print("Verbinden met", WIFI_SSID)
@@ -38,6 +40,17 @@ def verbind_wifi():
             return
         time.sleep(1)
     raise RuntimeError("WiFi verbinding mislukt")
+
+
+def herverbind_indien_nodig():
+    if not wlan.isconnected():
+        print("WiFi weg — herverbinden...")
+        wlan.disconnect()
+        time.sleep(1)
+        try:
+            verbind_wifi()
+        except RuntimeError:
+            print("Herverbinding mislukt, volgende cyclus opnieuw proberen")
 
 
 verbind_wifi()
@@ -173,6 +186,12 @@ def verwerk_commands():
             lcd.toon((naam + ": " + mood)[:16], tekst[:16])
             time.sleep(10)
             laatste_lcd_update = time.ticks_ms()
+        elif type_ == "ota_update":
+            lcd.toon("OTA update", "bezig...")
+            import ota
+            ota.check_en_update(supabase)
+            lcd.toon("OTA: actueel", "geen update")
+            time.sleep(2)
         elif type_ == "notify":
             if settings["pushover_enabled"]:
                 bericht = payload.get("bericht", "")
@@ -195,6 +214,7 @@ while True:
 
     # Sensor logging elke POLL_INTERVAL seconden
     if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
+        herverbind_indien_nodig()
         try:
             laatste_temp, laatste_vocht = dht11.lees()
         except Exception:

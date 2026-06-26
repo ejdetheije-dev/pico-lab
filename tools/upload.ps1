@@ -60,4 +60,10 @@ Get-ChildItem -Path $ExperimentDir -Filter '*.py' -File |
 Write-Host "Uploaden van $MainPy -> :main.py"
 mpremote cp $MainPy ':main.py'
 
+$VersionFile = Join-Path $ExperimentDir 'ota\version.txt'
+if (Test-Path $VersionFile) {
+    Write-Host "  cp $VersionFile -> :version.txt"
+    mpremote cp $VersionFile ':version.txt'
+}
+
 Write-Host "Klaar. Start REPL met: mpremote"
