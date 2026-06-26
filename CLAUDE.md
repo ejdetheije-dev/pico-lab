@@ -281,7 +281,37 @@ Stand per 2026-06-19:
   bias over de hele dataset (gemiddeld verschil -3.6pp), maar grote per-meting
   afwijking (~18pp) omdat Nexus binnen meet en Open-Meteo buiten — dit is verwacht
   gedrag, geen sensorfout.
-- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
+- **WiFi herverbinding toegevoegd (2026-06-26):**
+  - `herverbind_indien_nodig()` in `main.py`: controleert `wlan.isconnected()` voor elke
+    sensor-insert-cyclus en herverbindt automatisch als WiFi weg is.
+  - `verbind_wifi()` wordt opnieuw aangeroepen; `RuntimeError` (timeout na 20s) wordt
+    opgevangen zodat de loop nooit crasht bij langdurige WiFi-uitval.
+- **Vercel automatische deploy gerepareerd (2026-06-26):**
+  - Vercel Git-integratie werkte niet (GitHub-account kon niet worden gekoppeld).
+  - Oplossing: GitHub Actions workflow `.github/workflows/deploy-nexus-web.yml` —
+    triggert op push naar `main` bij wijzigingen in `nexus-web/`, deployt via
+    `vercel --prod` en update de alias `nexus-ejdetheije.vercel.app` automatisch.
+  - GitHub secret `VERCEL_TOKEN` vereist. `pico-lab` repo is **publiek** gemaakt
+    (config.py is gitignored, geen secrets in repo).
+- **PICO-48 afgerond (2026-06-26): OTA-updates via WiFi**
+  - `experiments/06_nexus/ota.py`: download + installeer nieuwe bestanden van GitHub.
+  - `experiments/06_nexus/ota/version.txt`: canonieke versie (bijv. `20260626003`).
+  - `experiments/06_nexus/ota/manifest.json`: lijst van te updaten bestanden.
+  - `config.py` wordt nooit overschreven door OTA.
+  - Trigger: `ota_update` command (knop "Software update" op Commands-pagina).
+  - Werkwijze: verhoog versienummer in `ota/version.txt`, commit + push → Pico
+    downloadt automatisch alle bestanden van GitHub raw URLs en herstart.
+  - `upload.ps1` kopieert `ota/version.txt` mee als `version.txt` bij USB-upload.
+  - Events gelogd: `ota_gestart`, `ota_geslaagd`, `ota_mislukt`, `ota_actueel`.
+- **Buiten grafieken toegevoegd aan Grafieken-pagina (2026-06-26):**
+  - Open-Meteo uurlijkse historische data (temp + vocht) als tweede lijn in de
+    temperatuur- en vochtigheidsgrafieken.
+  - Binnenlijn: gekleurde volle lijn. Buitenlijn: grijze gestippelde lijn.
+  - Buitendata gefilterd op tijdsbereik van de binnendata (X-as blijft intact).
+  - `connectNulls={true}` op beide lijnen zodat uurlijkse buitenpunten verbonden
+    zijn en er geen gaten in de binnenlijn ontstaan.
+  - `forecast_days=1` in Open-Meteo-aanroep zodat data van vandaag zichtbaar is.
+- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera), nieuwe printplaat.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 

@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-19) — experiment 06 Nexus actief
+## Status (2026-06-26) — experiment 06 Nexus actief
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -14,12 +14,12 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 05 solar tracker       | ja   | nee     | ja     | PICO-22   |
 | 06 nexus               | ja   | ja      | ja     | PICO-25   |
 
-Pico 2W op **COM9**. Nexus breadboard 9/9 componenten getest en werkend.
-Freenove breakout board pin-mapping definitief vastgesteld (L1=GPIO0, R1=VBUS,
-L12=GPIO9, R20=GPIO16, R10=GPIO26, R9=GPIO27). Op breakout board getest:
-DHT11, LDR, MAX4466, buzzer — allemaal OK. Eerste printplaat gemaakt maar
-vervangen door nieuwe (betere referentie beschikbaar). Volgende stappen:
-PICO-38 (IR bediening), PICO-46 (camera, na 2026-06-25), nieuwe printplaat.
+Pico 2W op **COM9**. Nexus draait op Freenove breakout board (opstelling B),
+7/7 componenten werkend. Nexus-web gedeployed op Vercel:
+https://nexus-ejdetheije.vercel.app. Automatisch deploy via GitHub Actions
+bij push naar main. Repo is **publiek** (vereist voor OTA raw.githubusercontent.com).
+PICO-48 (OTA) afgerond. Volgende stappen: PICO-38 (IR bediening),
+PICO-46 (camera), nieuwe printplaat.
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 
@@ -142,15 +142,20 @@ reactiemeting).
 
 - [ ] PICO-35: Geluidssensor event detectie (overgeslagen — sensor niet gevonden)
 - [x] PICO-36: Commands queue: `display_message` + `buzzer` vanuit website
-- [ ] PICO-37: Settings: poll interval instelbaar via website
+- [x] PICO-37: Settings: poll interval instelbaar via website
 
-### Fase 3 (Jira PICO-38/39/40/41/42)
+### Fase 3 (Jira PICO-38/39/40/41/42/43/44/45/46/47/48)
 
 - [ ] PICO-38: IR bediening + LCD menu
-- [ ] PICO-39: BME280 integreren (na levering 2026-06-25)
-- [ ] PICO-40: Website: grafieken + event log met filtering
-- [ ] PICO-42: KY-038 geluidssensor event detectie (arriveert 2026-06-11)
-- [ ] PICO-43: 4-kanaals relaimodule + 12V ventilator via website bedienen (arriveert 2026-06-11)
+- [x] PICO-39: BMP180 drukmeting geïntegreerd in Nexus
+- [x] PICO-40: Website: grafieken + event log met filtering
+- [x] PICO-42: MAX4466 geluidssensor geïntegreerd (KY-038 defect)
+- [x] PICO-43: 4-kanaals relaismodule + 12V ventilator via website
+- [x] PICO-44: Pushover notificaties
+- [x] PICO-45: Mood switch (naam + code + humeur → buzzer + LCD)
+- [ ] PICO-46: Adafruit TTL Camera (arriveert 2026-06-25)
+- [x] PICO-47: Data retentie via pg_cron (365 dagen)
+- [x] PICO-48: OTA software update via WiFi (GitHub raw URLs, manifest.json)
 
 ---
 
