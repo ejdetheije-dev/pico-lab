@@ -1,24 +1,28 @@
 import { useEffect, useState } from 'react'
 import {
   LineChart, Line, XAxis, YAxis, Tooltip,
-  ResponsiveContainer, CartesianGrid,
+  ResponsiveContainer, CartesianGrid, Legend,
 } from 'recharts'
 import { supabase } from '../lib/supabase'
 
 // ── types ────────────────────────────────────────────────────────────────────
 
 type Punt = { ts: number; waarde: number }
+type MergePunt = { ts: number; binnen?: number; buiten?: number }
 type Event = { id: number; type: string; payload: Record<string, unknown> }
 type Domain = [(d: number) => number, string] | [number | string, number | string]
-type SensorConf = { sensor: string; label: string; unit: string; kleur: string; domain?: Domain }
+type SensorConf = { sensor: string; label: string; unit: string; kleur: string; domain?: Domain; metBuiten?: boolean }
 type Limiet = 50 | 100 | 1000 | 50000
 
 // ── config ────────────────────────────────────────────────────────────────────
 
+const LAT = 52.13
+const LON = 4.45
+
 const SENSOREN: SensorConf[] = [
-  { sensor: 'dht11_temp',      label: 'Temperatuur',      unit: '°C',  kleur: '#f97316', domain: [(d: number) => Math.min(0, d), 'auto'] },
-  { sensor: 'dht11_humidity',  label: 'Luchtvochtigheid', unit: '%',   kleur: '#3b82f6' },
-  { sensor: 'ldr_light',       label: 'Licht',            unit: '%',   kleur: '#eab308' },
+  { sensor: 'dht11_temp',     label: 'Temperatuur',      unit: '°C', kleur: '#f97316', domain: [(d: number) => Math.min(0, d), 'auto'], metBuiten: true },
+  { sensor: 'dht11_humidity', label: 'Luchtvochtigheid', unit: '%',  kleur: '#3b82f6', metBuiten: true },
+  { sensor: 'ldr_light',      label: 'Licht',            unit: '%',  kleur: '#eab308' },
 ]
 
 const EVENT_FILTERS = [
@@ -40,7 +44,7 @@ function formatTick(ts: number, bereik: number): string {
   return d.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
 }
 
-function maakTicks(data: Punt[], n = 5): number[] {
+function maakTicks(data: MergePunt[], n = 5): number[] {
   if (data.length < 2) return data.map(p => p.ts)
   const min = data[0].ts
   const max = data[data.length - 1].ts
@@ -52,6 +56,16 @@ function formatTooltip(ts: number): string {
     day: 'numeric', month: 'short',
     hour: '2-digit', minute: '2-digit', second: '2-digit',
   })
+}
+
+function merge(binnen: Punt[], buiten: Punt[]): MergePunt[] {
+  const map = new Map<number, MergePunt>()
+  for (const p of binnen) map.set(p.ts, { ts: p.ts, binnen: p.waarde })
+  for (const p of buiten) {
+    const entry = map.get(p.ts) ?? { ts: p.ts }
+    map.set(p.ts, { ...entry, buiten: p.waarde })
+  }
+  return Array.from(map.values()).sort((a, b) => a.ts - b.ts)
 }
 
 // ── data fetchers ─────────────────────────────────────────────────────────────
@@ -82,26 +96,57 @@ async function fetchEvents(filter: string): Promise<Event[]> {
   return (data ?? []) as Event[]
 }
 
+async function fetchBuitenHistorie(dagEnTerug: number): Promise<{ temp: Punt[]; vocht: Punt[] }> {
+  const res = await fetch(
+    `https://api.open-meteo.com/v1/forecast?latitude=${LAT}&longitude=${LON}` +
+    `&hourly=temperature_2m,relative_humidity_2m` +
+    `&past_days=${dagEnTerug}&forecast_days=0&timezone=Europe/Amsterdam`
+  )
+  const json = await res.json()
+  const now = Date.now()
+  const times: string[] = json.hourly?.time ?? []
+  const temps: (number | null)[] = json.hourly?.temperature_2m ?? []
+  const vochts: (number | null)[] = json.hourly?.relative_humidity_2m ?? []
+
+  return {
+    temp: times
+      .map((t, i) => ({ ts: new Date(t).getTime(), waarde: temps[i] as number }))
+      .filter(p => p.ts <= now && p.waarde != null),
+    vocht: times
+      .map((t, i) => ({ ts: new Date(t).getTime(), waarde: vochts[i] as number }))
+      .filter(p => p.ts <= now && p.waarde != null),
+  }
+}
+
+function limietNaarDagen(limiet: Limiet): number {
+  if (limiet <= 100) return 1
+  if (limiet <= 1000) return 3
+  return 30
+}
+
 // ── SensorGrafiek ─────────────────────────────────────────────────────────────
 
-function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', 'auto'] }: SensorConf & { limiet: Limiet }) {
-  const [data, setData] = useState<Punt[]>([])
+function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', 'auto'], buitenData }: SensorConf & { limiet: Limiet; buitenData?: Punt[] }) {
+  const [binnen, setBinnen] = useState<Punt[]>([])
 
   useEffect(() => {
-    fetchHistorie(sensor, limiet).then(setData)
+    fetchHistorie(sensor, limiet).then(setBinnen)
 
-    // real-time: herlaad bij elke nieuwe INSERT voor dit sensortype
     const channel = supabase
       .channel(`sensor-${sensor}`)
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'sensor_readings', filter: `sensor=eq.${sensor}` },
-        () => fetchHistorie(sensor, limiet).then(setData),
+        () => fetchHistorie(sensor, limiet).then(setBinnen),
       )
       .subscribe()
 
     return () => { supabase.removeChannel(channel) }
   }, [sensor, limiet])
+
+  const data: MergePunt[] = buitenData
+    ? merge(binnen, buitenData)
+    : binnen.map(p => ({ ts: p.ts, binnen: p.waarde }))
 
   const bereik = data.length >= 2 ? data[data.length - 1].ts - data[0].ts : 0
   const ticks = maakTicks(data)
@@ -128,17 +173,37 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', '
             <YAxis tick={{ fontSize: 10, fill: '#9ca3af' }} domain={domain} />
             <Tooltip
               contentStyle={{ background: '#111827', border: 'none', fontSize: 12 }}
-              formatter={(v) => [`${Number(v)} ${unit}`, label]}
+              formatter={(v, name) => [`${Number(v).toFixed(1)} ${unit}`, name === 'binnen' ? 'Binnen' : 'Buiten']}
               labelFormatter={ts => formatTooltip(Number(ts))}
             />
+            {buitenData && (
+              <Legend
+                formatter={v => <span style={{ color: '#9ca3af', fontSize: 11 }}>{v === 'binnen' ? 'Binnen' : 'Buiten'}</span>}
+              />
+            )}
             <Line
               type="monotone"
-              dataKey="waarde"
+              dataKey="binnen"
+              name="binnen"
               stroke={kleur}
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}
+              connectNulls={false}
             />
+            {buitenData && (
+              <Line
+                type="monotone"
+                dataKey="buiten"
+                name="buiten"
+                stroke="#6b7280"
+                strokeWidth={1.5}
+                strokeDasharray="4 2"
+                dot={false}
+                isAnimationActive={false}
+                connectNulls={false}
+              />
+            )}
           </LineChart>
         </ResponsiveContainer>
       )}
@@ -169,7 +234,6 @@ function EventLog({ filter }: { filter: string }) {
   useEffect(() => {
     fetchEvents(filter).then(setEvents)
 
-    // real-time: voeg nieuwe event direct toe bovenaan
     const channel = supabase
       .channel(`events-changes-${filter || 'all'}`)
       .on(
@@ -204,6 +268,21 @@ function EventLog({ filter }: { filter: string }) {
 export default function Grafieken() {
   const [limiet, setLimiet] = useState<Limiet>(50)
   const [filter, setFilter] = useState('')
+  const [buitenTemp, setBuitenTemp] = useState<Punt[]>([])
+  const [buitenVocht, setBuitenVocht] = useState<Punt[]>([])
+
+  useEffect(() => {
+    fetchBuitenHistorie(limietNaarDagen(limiet)).then(({ temp, vocht }) => {
+      setBuitenTemp(temp)
+      setBuitenVocht(vocht)
+    })
+  }, [limiet])
+
+  function buitenVoor(sensor: string): Punt[] | undefined {
+    if (sensor === 'dht11_temp') return buitenTemp
+    if (sensor === 'dht11_humidity') return buitenVocht
+    return undefined
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8 flex flex-col gap-8">
@@ -229,7 +308,7 @@ export default function Grafieken() {
         </div>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           {SENSOREN.map(s => (
-            <SensorGrafiek key={s.sensor} {...s} limiet={limiet} />
+            <SensorGrafiek key={s.sensor} {...s} limiet={limiet} buitenData={buitenVoor(s.sensor)} />
           ))}
         </div>
       </section>
