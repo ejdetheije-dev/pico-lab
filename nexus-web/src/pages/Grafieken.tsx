@@ -193,7 +193,7 @@ function SensorGrafiek({ sensor, label, unit, kleur, limiet, domain = ['auto', '
               strokeWidth={2}
               dot={false}
               isAnimationActive={false}
-              connectNulls={false}
+              connectNulls={true}
             />
             {buitenData && (
               <Line
