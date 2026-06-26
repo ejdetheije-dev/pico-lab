@@ -1,0 +1,29 @@
+name: Deploy nexus-web to Vercel
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'nexus-web/**'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+
+      - name: Install Vercel CLI
+        run: npm install -g vercel
+
+      - name: Deploy to Vercel
+        working-directory: nexus-web
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: team_NYF3l3SyT3v1GrecSKR9st8z
+          VERCEL_PROJECT_ID: prj_9gR2TVFi12XO76jnzlQZmL5mRHKe
+        run: vercel --prod --token=$VERCEL_TOKEN
