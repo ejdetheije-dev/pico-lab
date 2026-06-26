@@ -88,7 +88,7 @@ geluid_drempel = max(GELUID_DREMPEL, geluid_ruis + 1000)
 print("Geluid ruisvloer:", geluid_ruis, "Drempel:", geluid_drempel)
 supabase.insert("events", {"type": "geluid_kalibratie", "payload": {"ruisvloer": geluid_ruis, "drempel": geluid_drempel}})
 
-lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "Nexus gestart")
+lcd.toon(str(laatste_temp) + "C " + str(laatste_vocht) + "%", "OTA v2 gestart")
 print("Nexus gestart")
 
 laatste_sensor_log = time.ticks_ms()

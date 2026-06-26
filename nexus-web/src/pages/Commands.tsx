@@ -62,6 +62,7 @@ export default function Commands() {
   const buzzerCmd = useCommand()
   const fanOn = useCommand()
   const fanOff = useCommand()
+  const ota = useCommand()
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -118,6 +119,16 @@ export default function Commands() {
             onClick={() => fanOff.stuur('fan_off')}
           />
         </div>
+
+        <hr className="border-gray-700" />
+
+        <h2 className="text-sm text-gray-400 uppercase tracking-wide">Firmware</h2>
+        <ActionButton
+          label="OTA update"
+          status={ota.status}
+          color="blue"
+          onClick={() => ota.stuur('ota_update')}
+        />
 
       </div>
     </div>
