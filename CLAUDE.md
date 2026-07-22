@@ -1,5 +1,8 @@
 # Pico Lab — Claude instructies
 
+Locatie: werkkamer / bureau (Voorschoten). Dit is de Nexus-installatie — vragen over
+temperatuur, geluid, beweging, licht en de bureauventilator in deze ruimte horen hier.
+
 ## Projectoverzicht
 
 Experimenteer-lab rond de Raspberry Pi Pico 2W. Doel: korte, afgebakende
