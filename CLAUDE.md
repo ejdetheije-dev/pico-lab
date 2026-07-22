@@ -311,7 +311,11 @@ Stand per 2026-06-19:
   - `connectNulls={true}` op beide lijnen zodat uurlijkse buitenpunten verbonden
     zijn en er geen gaten in de binnenlijn ontstaan.
   - `forecast_days=1` in Open-Meteo-aanroep zodat data van vandaag zichtbaar is.
-- **Volgende stappen:** PICO-38 (IR bediening), PICO-46 (camera), nieuwe printplaat.
+- **Backlog opgeschoond (2026-07-22):** PICO-38 (IR bediening) en PICO-46 (camera)
+  vervallen. IR heeft geen zinvolle use case; de Adafruit-camera is niet meer
+  leverbaar. Beide op Gereed gezet met label `vervallen` in Jira. BME280 wordt
+  niet op deze printplaat geintegreerd en een nieuwe printplaat is voorlopig
+  uitgesteld. Geen actieve openstaande PICO-taken meer.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
@@ -323,10 +327,10 @@ Stand per 2026-06-19:
 - **12V adaptor + ventilator** (in huis): aangesloten op relaiskanaal 2, werkt.
 - **MAX4466 geluidssensor** (2x, in huis, werkend): GPIO 27 (ADC1). PICO-42 afgerond.
 - **HC-SR501 PIR** (defect): getest op GPIO 22, nooit `1` gezien. Zelfde lot als KY-038.
-- **Adafruit TTL Serial JPEG Camera** (besteld, arriveert 2026-06-25): UART TTL, VC0706-chip.
-  GPIO 4 (TX) / GPIO 5 (RX) gereserveerd. PICO-46 aangemaakt.
-- **GY-BME280 / GY-BMP280** (besteld, arriveert 2026-06-25): I2C-adres 0x76 of 0x77.
-  Deelt bus met LCD en BMP180. Keuze BME280 vs BMP280 na ontvangst.
+- **Adafruit TTL Serial JPEG Camera** (VERVALLEN 2026-07-22): niet meer leverbaar,
+  geen alternatief gepland. PICO-46 gesloten.
+- **GY-BME280 / GY-BMP280** (in huis): wordt NIET geintegreerd op deze printplaat
+  (besluit 2026-07-22). I2C-adres 0x76 of 0x77 indien later alsnog gewenst.
 
 ### Supabase kolomnamen (bewezen uit debug-sessie)
 
