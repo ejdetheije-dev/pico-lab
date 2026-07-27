@@ -219,9 +219,8 @@ def log_crash(e):
     supabase.insert("events", {"type": "crash", "payload": {"traceback": tb[:1500]}})
 
 
-# Pas hier wapenen, niet vóór de bootsequentie: die bevat netwerkcalls en sensor-init
-# die ruim boven de 8388 ms uitkomen. Boot kan sindsdien niet meer eeuwig hangen omdat
-# elke netwerkcall een timeout heeft (supabase.TIMEOUT).
+# Pas hier wapenen, niet vóór de bootsequentie: die duurt langer dan de watchdog-marge.
+# Boot kan niet meer eeuwig hangen omdat elke netwerkcall een timeout heeft.
 wdt_actief = watchdog.wapen()
 
 # Boot-event met reset-oorzaak: 3 = WDT_RESET betekent dat de watchdog een hang heeft
@@ -233,7 +232,7 @@ supabase.insert("events", {"type": "boot", "payload": {
 }})
 
 while True:
-    watchdog.feed()
+    watchdog.leef()
     try:
         nu = time.ticks_ms()
 

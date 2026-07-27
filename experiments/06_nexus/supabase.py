@@ -4,9 +4,9 @@ import time
 import watchdog
 from config import SUPABASE_URL, SUPABASE_KEY
 
-# Per poging onder de watchdog-grens (8388 ms) blijven, anders reset het bord
-# midden in een legitieme call. Gemeten latency: 0,6-7,8 s.
-TIMEOUT = 7
+# Ruim boven de gemeten latency (0,6-13 s) en ruim onder watchdog.MARGE_S, zodat
+# een hangende socket via een exception herstelt in plaats van via een board-reset.
+TIMEOUT = 15
 
 _auth = {
     "apikey": SUPABASE_KEY,
@@ -27,8 +27,8 @@ def _vraag(methode, url, data=None):
     """HTTP-call met timeout en één retry. Geeft de body terug, raist bij twee mislukkingen.
 
     Vangt Exception, niet alleen OSError: zonder timeout hing een socket-read eeuwig
-    en een niet-JSON body gaf een fatale ValueError. Voedt de watchdog per poging,
-    want twee mislukte pogingen duren samen ruim boven de watchdog-grens.
+    en een niet-JSON body gaf een fatale ValueError. Meldt voortgang aan de watchdog
+    per poging, zodat een reeks trage calls geen reset uitlokt.
     """
     for poging in range(2):
         watchdog.feed()

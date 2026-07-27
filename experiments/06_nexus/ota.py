@@ -8,7 +8,7 @@ import watchdog
 BASE_URL = "https://raw.githubusercontent.com/ejdetheije-dev/pico-lab/main/experiments/06_nexus/"
 LOCAL_VERSION_PAD = "version.txt"
 NIET_UPDATEN = {"config.py"}
-TIMEOUT = 7  # zelfde grens als supabase.py: per poging onder de watchdog blijven
+TIMEOUT = 15  # zelfde grens als supabase.py
 
 
 def _lees_versie():
