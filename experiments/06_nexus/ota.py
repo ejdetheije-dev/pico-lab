@@ -3,10 +3,12 @@ import ujson
 import os
 import machine
 import time
+import watchdog
 
 BASE_URL = "https://raw.githubusercontent.com/ejdetheije-dev/pico-lab/main/experiments/06_nexus/"
 LOCAL_VERSION_PAD = "version.txt"
 NIET_UPDATEN = {"config.py"}
+TIMEOUT = 7  # zelfde grens als supabase.py: per poging onder de watchdog blijven
 
 
 def _lees_versie():
@@ -20,15 +22,18 @@ def _lees_versie():
 def _download(url):
     """Download URL, gooit OSError bij HTTP-fout of netwerkfout. Eén retry."""
     for poging in range(2):
+        watchdog.feed()
         try:
-            r = urequests.get(url)
+            r = urequests.get(url, timeout=TIMEOUT)
             if r.status_code != 200:
                 r.close()
                 raise OSError("HTTP " + str(r.status_code))
             data = r.content
             r.close()
+            watchdog.feed()
             return data
         except OSError:
+            watchdog.feed()
             if poging == 0:
                 time.sleep_ms(500)
             else:
@@ -72,6 +77,7 @@ def check_en_update(supabase_module):
         return
 
     for bestand in manifest:
+        watchdog.feed()
         if bestand in NIET_UPDATEN:
             print("OTA: sla over:", bestand)
             continue
@@ -98,5 +104,5 @@ def check_en_update(supabase_module):
 
     print("OTA: update geslaagd naar versie", remote_versie)
     supabase_module.insert("events", {"type": "ota_geslaagd", "payload": {"versie": remote_versie}})
-    time.sleep(2)
+    watchdog.sleep(2)
     machine.reset()

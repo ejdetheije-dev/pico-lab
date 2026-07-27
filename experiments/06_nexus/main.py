@@ -1,5 +1,9 @@
+import io
+import machine
 import network
+import sys
 import time
+import watchdog
 from config import WIFI_SSID, WIFI_PASSWORD
 import supabase
 from sensors.dht11 import DHT11
@@ -38,7 +42,7 @@ def verbind_wifi():
         if wlan.isconnected():
             print("Verbonden:", wlan.ifconfig()[0])
             return
-        time.sleep(1)
+        watchdog.sleep(1)
     raise RuntimeError("WiFi verbinding mislukt")
 
 
@@ -46,7 +50,7 @@ def herverbind_indien_nodig():
     if not wlan.isconnected():
         print("WiFi weg — herverbinden...")
         wlan.disconnect()
-        time.sleep(1)
+        watchdog.sleep(1)
         try:
             verbind_wifi()
         except RuntimeError:
@@ -156,17 +160,17 @@ def verwerk_commands():
         payload = cmd.get("payload") or {}
         if type_ == "display_message":
             lcd.toon(payload.get("regel1", ""), payload.get("regel2", ""))
-            time.sleep(3)
+            watchdog.sleep(3)
         elif type_ == "buzzer":
             buzzer.piep(payload.get("freq", 880), payload.get("duur_ms", 200))
         elif type_ == "fan_on":
             ventilator.aan()
             lcd.toon("Ventilator", "AAN")
-            time.sleep(2)
+            watchdog.sleep(2)
         elif type_ == "fan_off":
             ventilator.uit()
             lcd.toon("Ventilator", "UIT")
-            time.sleep(2)
+            watchdog.sleep(2)
         elif type_ == "mood_alert":
             naam = payload.get("naam", "")
             tekst = payload.get("tekst", "")
@@ -184,7 +188,7 @@ def verwerk_commands():
                 time.sleep_ms(80)
                 buzzer.piep(392, 500)
             lcd.toon((naam + ": " + mood)[:16], tekst[:16])
-            time.sleep(10)
+            watchdog.sleep(10)
             laatste_lcd_update = time.ticks_ms()
         elif type_ == "ota_update":
             lcd.toon("Software update", "bezig...")
@@ -206,63 +210,90 @@ def verwerk_commands():
     laatste_command_poll = time.ticks_ms()
 
 
+def log_crash(e):
+    """Schrijf de traceback naar Supabase. Zonder dit sterft een exception onzichtbaar."""
+    buf = io.StringIO()
+    sys.print_exception(e, buf)
+    tb = buf.getvalue()
+    print("CRASH:", tb)
+    supabase.insert("events", {"type": "crash", "payload": {"traceback": tb[:1500]}})
+
+
+# Pas hier wapenen, niet vóór de bootsequentie: die bevat netwerkcalls en sensor-init
+# die ruim boven de 8388 ms uitkomen. Boot kan sindsdien niet meer eeuwig hangen omdat
+# elke netwerkcall een timeout heeft (supabase.TIMEOUT).
+wdt_actief = watchdog.wapen()
+
+# Boot-event met reset-oorzaak: 3 = WDT_RESET betekent dat de watchdog een hang heeft
+# opgeruimd, 1 = PWRON_RESET is een stroomonderbreking. Zonder dit is na een incident
+# niet vast te stellen waarom het bord opnieuw is gestart.
+supabase.insert("events", {"type": "boot", "payload": {
+    "reset_cause": machine.reset_cause(),
+    "wdt": wdt_actief,
+}})
+
 while True:
-    nu = time.ticks_ms()
+    watchdog.feed()
+    try:
+        nu = time.ticks_ms()
 
-    verwerk_beweging()
-    verwerk_geluid()
+        verwerk_beweging()
+        verwerk_geluid()
 
-    # Sensor logging elke POLL_INTERVAL seconden
-    if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
-        herverbind_indien_nodig()
-        try:
-            laatste_temp, laatste_vocht = dht11.lees()
-        except Exception:
-            time.sleep(2)
+        # Sensor logging elke POLL_INTERVAL seconden
+        if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
+            herverbind_indien_nodig()
             try:
                 laatste_temp, laatste_vocht = dht11.lees()
             except Exception:
-                print("DHT11 fout, gebruik laatste waarde")
-        laatste_licht = ldr.lees()
-        print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht)
-        supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
+                watchdog.sleep(2)
+                try:
+                    laatste_temp, laatste_vocht = dht11.lees()
+                except Exception:
+                    print("DHT11 fout, gebruik laatste waarde")
+            laatste_licht = ldr.lees()
+            print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht)
+            supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
+            verwerk_commands()
+            verwerk_beweging()
+            verwerk_geluid()
+            supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
+            verwerk_commands()
+            verwerk_beweging()
+            verwerk_geluid()
+            supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
+            verwerk_commands()
+            verwerk_beweging()
+            verwerk_geluid()
+            laatste_sensor_log = time.ticks_ms()
+            laatste_lcd_update = 0  # forceer direct LCD refresh
+
+            # Temperatuuralert: stuur eenmalig bij overschrijding, reset bij herstel
+            drempel = settings["temp_alert_threshold"]
+            if laatste_temp > drempel and not temp_alert_actief:
+                temp_alert_actief = True
+                if settings["pushover_enabled"]:
+                    bericht = "Temperatuur " + str(laatste_temp) + "C (drempel " + str(drempel) + "C)"
+                    if pushover(bericht, "Nexus alert"):
+                        supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": bericht}})
+            elif laatste_temp <= drempel and temp_alert_actief:
+                temp_alert_actief = False
+
         verwerk_commands()
-        verwerk_beweging()
-        verwerk_geluid()
-        supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
-        verwerk_commands()
-        verwerk_beweging()
-        verwerk_geluid()
-        supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
-        verwerk_commands()
-        verwerk_beweging()
-        verwerk_geluid()
-        laatste_sensor_log = time.ticks_ms()
-        laatste_lcd_update = 0  # forceer direct LCD refresh
 
-        # Temperatuuralert: stuur eenmalig bij overschrijding, reset bij herstel
-        drempel = settings["temp_alert_threshold"]
-        if laatste_temp > drempel and not temp_alert_actief:
-            temp_alert_actief = True
-            if settings["pushover_enabled"]:
-                bericht = "Temperatuur " + str(laatste_temp) + "C (drempel " + str(drempel) + "C)"
-                if pushover(bericht, "Nexus alert"):
-                    supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": bericht}})
-        elif laatste_temp <= drempel and temp_alert_actief:
-            temp_alert_actief = False
+        # LCD roteren: scherm 0 = sensoren, scherm 1 = beweging — elke 4s wisselen
+        if time.ticks_diff(time.ticks_ms(), laatste_lcd_update) >= 4000:
+            if lcd_scherm == 0:
+                r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% L:" + str(laatste_licht)
+                r2 = "Geluid: " + ("JA!" if geluid_actief else "nee")
+            else:
+                r1 = "Beweging: " + ("JA!" if beweging_actief else "nee")
+                r2 = laatste_event
+            lcd.toon(r1, r2)
+            lcd_scherm = 1 - lcd_scherm
+            laatste_lcd_update = time.ticks_ms()
 
-    verwerk_commands()
-
-    # LCD roteren: scherm 0 = sensoren, scherm 1 = beweging — elke 4s wisselen
-    if time.ticks_diff(time.ticks_ms(), laatste_lcd_update) >= 4000:
-        if lcd_scherm == 0:
-            r1 = str(laatste_temp) + "C " + str(laatste_vocht) + "% L:" + str(laatste_licht)
-            r2 = "Geluid: " + ("JA!" if geluid_actief else "nee")
-        else:
-            r1 = "Beweging: " + ("JA!" if beweging_actief else "nee")
-            r2 = laatste_event
-        lcd.toon(r1, r2)
-        lcd_scherm = 1 - lcd_scherm
-        laatste_lcd_update = time.ticks_ms()
-
-    time.sleep_ms(100)
+        time.sleep_ms(100)
+    except Exception as e:
+        log_crash(e)
+        watchdog.sleep(5)

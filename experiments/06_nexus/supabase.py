@@ -1,7 +1,12 @@
 import urequests
 import ujson
 import time
+import watchdog
 from config import SUPABASE_URL, SUPABASE_KEY
+
+# Per poging onder de watchdog-grens (8388 ms) blijven, anders reset het bord
+# midden in een legitieme call. Gemeten latency: 0,6-7,8 s.
+TIMEOUT = 7
 
 _auth = {
     "apikey": SUPABASE_KEY,
@@ -18,14 +23,28 @@ _write_headers = {
 }
 
 
-def _post(url, data):
-    """POST met één retry na 500ms bij ECONNRESET."""
+def _vraag(methode, url, data=None):
+    """HTTP-call met timeout en één retry. Geeft de body terug, raist bij twee mislukkingen.
+
+    Vangt Exception, niet alleen OSError: zonder timeout hing een socket-read eeuwig
+    en een niet-JSON body gaf een fatale ValueError. Voedt de watchdog per poging,
+    want twee mislukte pogingen duren samen ruim boven de watchdog-grens.
+    """
     for poging in range(2):
+        watchdog.feed()
         try:
-            r = urequests.post(url, headers=_write_headers, data=data)
+            if methode == "GET":
+                r = urequests.get(url, headers=_auth, timeout=TIMEOUT)
+            elif methode == "POST":
+                r = urequests.post(url, headers=_write_headers, data=data, timeout=TIMEOUT)
+            else:
+                r = urequests.patch(url, headers=_write_headers, data=data, timeout=TIMEOUT)
+            inhoud = r.content
             r.close()
-            return
-        except OSError:
+            watchdog.feed()
+            return inhoud
+        except Exception:
+            watchdog.feed()
             if poging == 0:
                 time.sleep_ms(500)
             else:
@@ -35,62 +54,38 @@ def _post(url, data):
 def insert(table, data):
     """Voeg een rij in aan de opgegeven tabel."""
     try:
-        _post(SUPABASE_URL + "/rest/v1/" + table, ujson.dumps(data))
-    except OSError as e:
+        _vraag("POST", SUPABASE_URL + "/rest/v1/" + table, ujson.dumps(data))
+    except Exception as e:
         print("insert fout:", table, e)
 
 
 def get_pending_commands():
-    """Haal niet-uitgevoerde commands op (executed_at is null)."""
-    for poging in range(2):
-        try:
-            r = urequests.get(
-                SUPABASE_URL + "/rest/v1/commands?executed_at=is.null&order=id.asc",
-                headers=_auth,
-            )
-            data = r.content
-            r.close()
-            return ujson.loads(data)
-        except OSError:
-            if poging == 0:
-                time.sleep_ms(500)
-            else:
-                print("get_pending_commands fout: twee pogingen mislukt")
-                return []
+    """Haal niet-uitgevoerde commands op (executed_at is null). Lege lijst bij fout."""
+    try:
+        body = _vraag("GET", SUPABASE_URL + "/rest/v1/commands?executed_at=is.null&order=id.asc")
+        return ujson.loads(body)
+    except Exception as e:
+        print("get_pending_commands fout:", e)
+        return []
 
 
 def get_settings():
     """Haal settings op als dict {key: value}. Geeft lege dict bij fout."""
-    for poging in range(2):
-        try:
-            r = urequests.get(
-                SUPABASE_URL + "/rest/v1/settings?select=key,value",
-                headers=_auth,
-            )
-            data = r.content
-            r.close()
-            return {row["key"]: row["value"] for row in ujson.loads(data)}
-        except OSError:
-            if poging == 0:
-                time.sleep_ms(500)
-            else:
-                print("get_settings fout: twee pogingen mislukt")
-                return {}
+    try:
+        body = _vraag("GET", SUPABASE_URL + "/rest/v1/settings?select=key,value")
+        return {row["key"]: row["value"] for row in ujson.loads(body)}
+    except Exception as e:
+        print("get_settings fout:", e)
+        return {}
 
 
 def mark_executed(command_id):
     """Zet executed_at op het huidige tijdstip voor een command."""
-    for poging in range(2):
-        try:
-            r = urequests.patch(
-                SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
-                headers=_write_headers,
-                data=ujson.dumps({"executed_at": "now"}),
-            )
-            r.close()
-            return
-        except OSError:
-            if poging == 0:
-                time.sleep_ms(500)
-            else:
-                print("mark_executed fout: twee pogingen mislukt")
+    try:
+        _vraag(
+            "PATCH",
+            SUPABASE_URL + "/rest/v1/commands?id=eq." + str(command_id),
+            ujson.dumps({"executed_at": "now"}),
+        )
+    except Exception as e:
+        print("mark_executed fout:", e)

@@ -1,4 +1,5 @@
 [
+  "watchdog.py",
   "main.py",
   "supabase.py",
   "ota.py",
