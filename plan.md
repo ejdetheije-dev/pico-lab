@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-06-26) — experiment 06 Nexus actief
+## Status (2026-07-27) — experiment 06 Nexus actief, loop herstelt zichzelf
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -14,12 +14,41 @@ combineren, ten slotte sensor + actuator als regelkring.
 | 05 solar tracker       | ja   | nee     | ja     | PICO-22   |
 | 06 nexus               | ja   | ja      | ja     | PICO-25   |
 
-Pico 2W op **COM9**. Nexus draait op Freenove breakout board (opstelling B),
-7/7 componenten werkend. Nexus-web gedeployed op Vercel:
+Pico 2W op **COM10** (het poortnummer verschuift bij opnieuw inpluggen — detecteer
+met `mpremote connect list`, zoek VID `2e8a:`). Nexus draait op Freenove breakout
+board (opstelling B), 7/7 componenten werkend. Nexus-web gedeployed op Vercel:
 https://nexus-ejdetheije.vercel.app. Automatisch deploy via GitHub Actions
 bij push naar main. Repo is **publiek** (vereist voor OTA raw.githubusercontent.com).
-PICO-48 (OTA) afgerond. Volgende stappen: PICO-38 (IR bediening),
-PICO-46 (camera), nieuwe printplaat.
+PICO-48 (OTA) afgerond. Geen actieve openstaande PICO-taken.
+
+**Zelfherstel toegevoegd (2026-07-27, commits `ac40ad3`, `8a621a8`, `9117dab`):**
+
+De loop stopte elke 9 uur tot 2,5 dag en kwam er nooit zelf uit. Bewijs: de
+`geluid_kalibratie`-events (één per boot) vielen 1:1 samen met elke run-start in
+`sensor_readings`, dus **geen enkele zelf-herstart in de hele historie** — elke
+herstart was handmatig. De site sprong daardoor op "Offline"; die badge is puur
+afgeleid van de versheid van de nieuwste rij (`Dashboard.tsx`), geen website-status.
+
+- Nieuw `watchdog.py`: timer-gevoede WDT met expliciete deadline (`MARGE_S = 45`).
+- `timeout=15` op elke urequests-call in `supabase.py` en `ota.py`.
+- Top-level `try/except` om de loop-body → traceback naar `events.type='crash'`.
+- `boot`-event per start met `reset_cause` en `wdt`.
+- `watchdog.py` als eerste in `ota/manifest.json`; OTA-versie `20260727002`.
+
+Onderweg ingeperkt: alle drie de sensoren zijn hard begrensd en vallen af als
+oorzaak; wat overblijft is de netwerkgrens, met `get_pending_commands()` op
+~28.800 calls per dag als hoofdverdachte. **De oorspronkelijke oorzaak is nog niet
+bekend** — de crash-logging moet die bij de volgende keer opleveren.
+
+Valkuilen en de bewezen getallen staan in CLAUDE.md, sectie "Betrouwbaarheid van de
+Nexus-loop". Kort: `timeout=` begrenst niet de totale call-duur, WDT-max is 8388 ms,
+en een soft-IRQ blijft lopen tijdens een blokkerende socket-read.
+
+**Openstaand na deze fix:** (a) of het bord het dágen volhoudt is nog niet aangetoond —
+kijk naar de `boot`-events; (b) waarom de TLS-handshake 6-13 s duurt is nooit onderzocht,
+en dat maakt de effectieve logcyclus ~78 s in plaats van 60 s; (c) een dead-man's switch
+die meldt als er N minuten geen rij is; (d) direct navigeren naar een subpagina van
+nexus-web geeft een Vercel 404 — er mist een SPA-rewrite naar `index.html`.
 
 **PICO-22 afgerond** (experiment 05 solar tracker, Jira-status Gereed):
 

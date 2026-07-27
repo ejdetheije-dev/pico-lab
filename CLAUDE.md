@@ -58,7 +58,11 @@ we aan het werken zijn** voordat je pin-nummers, testscripts of verbindingen noe
 Stand per 2026-06-19:
 
 - **Nieuwe Pico 2W op COM9** met MicroPython (voorgeïnstalleerd uit de doos).
-  Oude Pico (COM8) niet meer in gebruik voor Nexus.
+  Oude Pico (COM8) niet meer in gebruik voor Nexus. De COM-poort verschuift als je
+  hem opnieuw inplugt — op 2026-07-27 was hij COM10. Detecteer met
+  `mpremote connect list` en zoek de regel met VID `2e8a:`, gok het nummer niet.
+  Firmware daar gemeten: MicroPython **1.28.0**, `RPI_PICO2_W` (RP2350), 150 MHz,
+  ~452 KB vrije heap.
 - **Fase 0 afgerond:** PICO-7, PICO-8, PICO-9 (Gereed in Jira).
 - **PICO-10 afgerond** (experiment 01 weerstation volledig werkend):
   - DHT11 op GPIO 16, kaal — `Pin.IN, Pin.PULL_UP` expliciet meegeven.
@@ -319,6 +323,16 @@ Stand per 2026-06-19:
   leverbaar. Beide op Gereed gezet met label `vervallen` in Jira. BME280 wordt
   niet op deze printplaat geintegreerd en een nieuwe printplaat is voorlopig
   uitgesteld. Geen actieve openstaande PICO-taken meer.
+- **Loop herstelt zichzelf na een hang (2026-07-27, commits `ac40ad3` + `8a621a8`):**
+  De loop stopte elke 9 uur tot 2,5 dag en kwam er nooit zelf uit — elke herstart in
+  de hele historie was handmatig. Er was geen watchdog en geen top-level `except`, dus
+  een enkele ongevangen exception of hangende socket was definitief. Opgelost met
+  `watchdog.py` (timer-gevoede WDT met deadline), `timeout=15` op elke urequests-call,
+  een top-level `try/except` dat de traceback naar `events.type='crash'` schrijft, en
+  een `boot`-event met `reset_cause`. Zie de sectie "Betrouwbaarheid van de Nexus-loop"
+  voor de regels die hieruit volgen — vooral: bouw nooit een WDT-ontwerp op de aanname
+  dat een netwerkcall kort is. Oorspronkelijke oorzaak nog niet bekend; de crash-logging
+  moet die bij de volgende keer opleveren.
 
 ### Nieuwe hardware — beschikbaar en onderweg
 
@@ -710,6 +724,61 @@ mpremote run tools/test_mijn_script.py
 
 **Let op:** `mpremote run` verwacht een **lokaal pad**. Nooit eerst `cp` doen
 en daarna `run` zonder pad — dat geeft "could not read file".
+
+**Let op — mpremote versus de watchdog (Nexus):** elk `mpremote`-commando onderbreekt
+de draaiende `main.py` om bij de REPL te komen. Daarna schuift niemand de
+watchdog-deadline meer op en reset het bord na ~53 s: je seriële verbinding valt dan
+midden in je commando weg met `SerialException: ClearCommError failed`. Dat is geen
+kapotte kabel en geen bug. Voor langer werk aan de REPL: zet een bestand `wdt_uit` op
+het bord en reset, dan slaat `watchdog.wapen()` het wapenen over. Weer weghalen als je
+klaar bent — controleer via het `boot`-event of `wdt` weer `true` is.
+
+## Betrouwbaarheid van de Nexus-loop (watchdog)
+
+Bewezen op 2026-07-27 op de Nexus-Pico. Dit is de duurste les van dit project; lees dit
+vóór je iets aan `main.py` of `supabase.py` verandert.
+
+**De hardware-grens.** `machine.WDT` op de RP2350 accepteert maximaal **8388 ms** —
+hoger geeft `ValueError: timeout exceeds 8388`. Een gewapende WDT kan **niet** meer uit.
+
+**De valkuil die een regressie veroorzaakte.** `timeout=` op een urequests-call begrenst
+**niet** de totale duur van die call: het geldt per socket-operatie, en de DNS-lookup
+ervóór valt er helemaal buiten. De eerste opzet voedde de WDT rond elke call en vertrouwde
+erop dat een call binnen 8388 ms bleef. Het bord ging daarop elke 1 tot 5 minuten
+herstarten. Gemeten: opeenvolgende inserts liggen routinematig **13 s** uit elkaar, want
+elke call zet door `Connection: close` een nieuwe TLS-handshake op (0,6-7,8 s, bimodaal).
+Calls van 6-7 s zijn hier dus normaal. **Bouw nooit een watchdog-ontwerp op de aanname
+dat een netwerkcall kort is.**
+
+**Het ontwerp dat wel werkt.** Een `machine.Timer` voedt de WDT, maar alléén zolang een
+expliciete deadline niet verstreken is; de loop schuift die deadline elke iteratie op met
+`watchdog.leef()` (`MARGE_S = 45`). De duur van een enkele call doet daarmee niet meer mee.
+Een echte hang laat de deadline verlopen en het bord reset binnen ~53 s.
+
+**Waarom dat kan.** Een soft-IRQ blijft lopen tijdens een blokkerende socket-operatie —
+gemeten 18 timer-ticks tijdens een blokkade van 19 s. Zonder die eigenschap was dit
+ontwerp onmogelijk. (Let op het verschil met de ISR-regel elders: in `_tick()` worden
+globals alleen *gelezen*; muteren van een global int in een IRQ blijft onbetrouwbaar.)
+
+**Voed alle lange pauzes.** Elke `sleep` boven ~1 s moet `watchdog.sleep()` zijn, inclusief
+de 20× `sleep(1)` in `verbind_wifi()` en de DHT11-retry. Anders maakt een gezonde
+wifi-herverbinding juist een reset.
+
+**`reset_cause` lezen.** Op RP2 is `machine.reset()` zélf via de watchdog geïmplementeerd,
+dus code **3** (`WDT_RESET`) is **niet eenduidig** — een expliciete reset geeft ook 3.
+Leesregel: 3 met een `ota_geslaagd`-event er direct voor is een bedoelde reset; 3 zonder
+dat is de watchdog die ingreep, of iemand die `mpremote reset` deed. Code **1**
+(`PWRON_RESET`) is ondubbelzinnig stroomverlies.
+
+**Observability.** Elke boot schrijft een `boot`-event met `reset_cause` en `wdt`; een
+ongevangen exception schrijft de traceback naar `events.type='crash'`. Zonder die twee is
+na een incident niet vast te stellen wat er gebeurde — dat is precies waarom de
+oorspronkelijke oorzaak van maanden crashes nog steeds onbekend is.
+
+**OTA-consequentie.** `watchdog.py` staat als **eerste** in `ota/manifest.json`. De
+manifest wordt in volgorde afgelopen, dus een module waar `main.py` van afhangt moet vóór
+`main.py` landen — anders laat een halverwege afgebroken OTA een `main.py` achter die een
+ontbrekende module importeert, en dat is een baksteen.
 
 ## Codeerstijl
 
