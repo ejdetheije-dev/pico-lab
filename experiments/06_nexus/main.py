@@ -252,15 +252,15 @@ while True:
                     print("DHT11 fout, gebruik laatste waarde")
             laatste_licht = ldr.lees()
             print("Temp:", laatste_temp, "Vocht:", laatste_vocht, "Licht:", laatste_licht)
-            supabase.insert("sensor_readings", {"sensor": "dht11_temp", "value": laatste_temp})
-            verwerk_commands()
-            verwerk_beweging()
-            verwerk_geluid()
-            supabase.insert("sensor_readings", {"sensor": "dht11_humidity", "value": laatste_vocht})
-            verwerk_commands()
-            verwerk_beweging()
-            verwerk_geluid()
-            supabase.insert("sensor_readings", {"sensor": "ldr_light", "value": laatste_licht})
+            # Eén call voor drie rijen: PostgREST accepteert een array als body. Elke call
+            # is een eigen TLS-handshake (0,6-13 s), dus dit scheelt twee handshakes per
+            # cyclus. Het interleaven van commands tussen de inserts is daarmee overbodig:
+            # dat bestond alleen omdat drie losse inserts de loop ~30 s blokkeerden.
+            supabase.insert("sensor_readings", [
+                {"sensor": "dht11_temp", "value": laatste_temp},
+                {"sensor": "dht11_humidity", "value": laatste_vocht},
+                {"sensor": "ldr_light", "value": laatste_licht},
+            ])
             verwerk_commands()
             verwerk_beweging()
             verwerk_geluid()

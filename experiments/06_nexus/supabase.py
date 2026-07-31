@@ -52,7 +52,7 @@ def _vraag(methode, url, data=None):
 
 
 def insert(table, data):
-    """Voeg een rij in aan de opgegeven tabel."""
+    """Voeg een rij (dict) of meerdere rijen (lijst van dicts) in aan de opgegeven tabel."""
     try:
         _vraag("POST", SUPABASE_URL + "/rest/v1/" + table, ujson.dumps(data))
     except Exception as e:
