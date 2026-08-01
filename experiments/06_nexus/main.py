@@ -9,7 +9,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
-from sensors.p1 import lees as lees_p1, P1_HOST
+from sensors.p1 import lees as lees_p1, diagnose as diagnose_p1, P1_HOST
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -293,6 +293,14 @@ supabase.insert("events", {"type": "boot", "payload": {
     "net": wlan.ifconfig(),
     "p1_host": P1_HOST,
 }})
+
+# TIJDELIJK (2026-08-01): eenmalig bij boot vaststellen wat de Pico op het LAN wel en niet
+# bereikt. Weghalen zodra de P1-timeout verklaard is.
+supabase.insert("events", {"type": "p1_diagnose", "payload": diagnose_p1([
+    "http://" + wlan.ifconfig()[2] + "/",
+    "http://" + P1_HOST + "/api",
+    "http://" + P1_HOST + "/api/v1/data",
+])})
 
 while True:
     watchdog.leef()

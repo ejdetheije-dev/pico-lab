@@ -25,6 +25,26 @@ P1_HOST = getattr(config, "P1_HOST", "192.168.178.190")
 TIMEOUT = 15
 
 
+def diagnose(doelen):
+    """Probeert een lijst URL's en geeft per URL 'ok <status>' of de foutmelding terug.
+
+    Tijdelijk, voor een concrete vraag: de Pico krijgt ETIMEDOUT op de P1 terwijl hij
+    Supabase over internet wel bereikt. Als de gateway wel lukt en de P1 niet, ligt het
+    aan verkeer tussen twee wifi-clients; lukt de gateway ook niet, dan aan het LAN-pad.
+    Weghalen zodra dat beantwoord is.
+    """
+    uitslag = {}
+    for url in doelen:
+        watchdog.feed()
+        try:
+            r = urequests.get(url, timeout=TIMEOUT)
+            uitslag[url] = "ok " + str(r.status_code)
+            r.close()
+        except Exception as e:
+            uitslag[url] = str(e) or repr(e)
+    return uitslag
+
+
 def lees():
     """Geeft (meting, fout). Bij succes is fout None, bij mislukking is meting None.
 
