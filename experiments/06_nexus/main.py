@@ -9,7 +9,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
-from sensors.p1 import lees as lees_p1, P1_HOST
+from sensors.p1 import lees as lees_p1, proef as proef_p1, P1_HOST
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -294,14 +294,9 @@ supabase.insert("events", {"type": "boot", "payload": {
     "p1_host": P1_HOST,
 }})
 
-# Eenmalig bij boot: lukt de eerste lezing? Zo staat in de events of de meter bereikbaar was
-# op het moment dat deze firmware startte, zonder op de eerste sample-ronde te wachten.
-_proef, _proeffout = lees_p1()
-supabase.insert("events", {"type": "p1_proef", "payload": {
-    "ok": _proef is not None,
-    "fout": _proeffout,
-    "power_w": _proef["power_w"] if _proef else None,
-}})
+# Eenmalig bij boot: beide endpoints meten, met bytes en tijd. Alleen het grote endpoint
+# faalt, dus dit laat zien of het antwoord nooit begint of halverwege stokt.
+supabase.insert("events", {"type": "p1_proef", "payload": proef_p1()})
 
 while True:
     watchdog.leef()

@@ -14,6 +14,7 @@ encoding - de meter stuurt een nette Content-Length.
 """
 
 import config
+import time
 import ujson
 import usocket
 import watchdog
@@ -30,19 +31,27 @@ TIMEOUT = 5
 
 
 def _haal(pad):
-    """Doet een HTTP/1.0 GET met het hele request in een write. Geeft de body als bytes."""
+    """Doet een HTTP/1.0 GET met het hele request in een write. Geeft de body als bytes.
+
+    Een mislukking draagt het aantal al ontvangen bytes en de verstreken tijd mee: bij deze
+    meter faalt alleen het grote endpoint, en dan is het verschil tussen "antwoord begint
+    nooit" en "antwoord stokt halverwege" precies de informatie die je nodig hebt.
+    """
     adres = usocket.getaddrinfo(P1_HOST, 80)[0][-1]
     s = usocket.socket()
     s.settimeout(TIMEOUT)
+    begin = time.ticks_ms()
+    antwoord = b""
     try:
         s.connect(adres)
         s.write(b"GET " + pad + b" HTTP/1.0\r\nHost: " + P1_HOST.encode() + b"\r\n\r\n")
-        antwoord = b""
         while True:
             brok = s.read(512)
             if not brok:
                 break
             antwoord += brok
+    except Exception as e:
+        raise ValueError("%s na %d bytes in %d ms" % (e, len(antwoord), time.ticks_diff(time.ticks_ms(), begin)))
     finally:
         s.close()
 
@@ -53,6 +62,22 @@ def _haal(pad):
     if b" 200 " not in kop.split(b"\r\n")[0]:
         raise ValueError(kop.split(b"\r\n")[0].decode())
     return antwoord[scheiding + 4:]
+
+
+def proef():
+    """Meet beide endpoints een keer en geeft per pad het aantal bytes of de fout.
+
+    /api is klein (122 bytes) en werkt, /api/v1/data is groot (1120) en faalt. Ze naast
+    elkaar meten laat zien of dat verschil aan de omvang ligt.
+    """
+    uitslag = {}
+    for pad in (b"/api", b"/api/v1/data"):
+        watchdog.feed()
+        try:
+            uitslag[pad.decode()] = "ok %d bytes" % len(_haal(pad))
+        except Exception as e:
+            uitslag[pad.decode()] = str(e) or repr(e)
+    return uitslag
 
 
 def lees():
