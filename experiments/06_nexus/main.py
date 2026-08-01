@@ -9,7 +9,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
-from sensors.p1 import lees as lees_p1
+from sensors.p1 import lees as lees_p1, P1_HOST
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -26,6 +26,8 @@ P1_SAMPLE_MS = 15_000
 # Ruim een uur buffer. Loopt hij vol doordat Supabase langer weg is, dan vallen de oudste
 # samples af: de meterstanden zijn cumulatief, dus de recentste zijn het meest waard.
 P1_BUFFER_MAX = 240
+# Rem op de foutlogging: een onbereikbare meter mag de events-tabel niet volschrijven.
+P1_FOUT_STIL_MS = 300_000
 
 
 def laad_settings():
@@ -114,6 +116,7 @@ geluid_actief = False
 laatste_geluid = time.ticks_ms()
 lcd_scherm = 0
 laatste_p1 = time.ticks_ms()
+laatste_p1_fout = time.ticks_ms() - P1_FOUT_STIL_MS  # eerste fout mag meteen gelogd worden
 p1_buffer = []
 
 # Reset website-toestand bij herstart
@@ -162,13 +165,20 @@ def verwerk_geluid():
 
 
 def verwerk_p1():
-    """Sampelt de slimme meter en bewaart hem in RAM. Schrijft niets weg."""
-    global laatste_p1
+    """Sampelt de slimme meter en bewaart hem in RAM. Schrijft geen meting weg.
+
+    Een mislukte lezing wordt wel gelogd, maar hooguit eens per P1_FOUT_STIL_MS: zonder die
+    rem zou een onbereikbare meter de events-tabel volschrijven met dezelfde regel.
+    """
+    global laatste_p1, laatste_p1_fout
     if time.ticks_diff(time.ticks_ms(), laatste_p1) < P1_SAMPLE_MS:
         return
     laatste_p1 = time.ticks_ms()
-    meting = lees_p1()
-    if meting is None:
+    meting, fout = lees_p1()
+    if fout is not None:
+        if time.ticks_diff(time.ticks_ms(), laatste_p1_fout) > P1_FOUT_STIL_MS:
+            laatste_p1_fout = time.ticks_ms()
+            supabase.insert("events", {"type": "p1_fout", "payload": {"host": P1_HOST, "fout": fout[:200]}})
         return
     if len(p1_buffer) >= P1_BUFFER_MAX:
         p1_buffer.pop(0)
@@ -278,6 +288,8 @@ wdt_actief = watchdog.wapen()
 supabase.insert("events", {"type": "boot", "payload": {
     "reset_cause": machine.reset_cause(),
     "wdt": wdt_actief,
+    "ip": wlan.ifconfig()[0],
+    "p1_host": P1_HOST,
 }})
 
 while True:

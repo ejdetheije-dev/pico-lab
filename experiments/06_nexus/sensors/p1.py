@@ -24,7 +24,10 @@ TIMEOUT = 5
 
 
 def lees():
-    """Momentopname van de meter als dict, of None als de P1 niet antwoordt.
+    """Geeft (meting, fout). Bij succes is fout None, bij mislukking is meting None.
+
+    De foutmelding komt terug in plaats van alleen een print, omdat de Pico normaal niet aan
+    USB hangt: zonder dit is een onbereikbare meter volledig onzichtbaar vanaf de buitenkant.
 
     De sleutels zijn die van het energy_ingest-contract, niet die van de P1: de omzetting
     hoort hier, zodat main.py niets van het JSON-formaat van HomeWizard hoeft te weten.
@@ -37,7 +40,7 @@ def lees():
         d = ujson.loads(inhoud)
     except Exception as e:
         print("p1 fout:", e)
-        return None
+        return None, str(e) or repr(e)
 
     return {
         "active_tariff": d["active_tariff"],
@@ -50,4 +53,4 @@ def lees():
         "l1_w": d["active_power_l1_w"],
         "l2_w": d["active_power_l2_w"],
         "l3_w": d["active_power_l3_w"],
-    }
+    }, None
