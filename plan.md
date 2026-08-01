@@ -19,7 +19,8 @@ met `mpremote connect list`, zoek VID `2e8a:`). Nexus draait op Freenove breakou
 board (opstelling B), 7/7 componenten werkend. Nexus-web gedeployed op Vercel:
 https://nexus-ejdetheije.vercel.app. Automatisch deploy via GitHub Actions
 bij push naar main. Repo is **publiek** (vereist voor OTA raw.githubusercontent.com).
-PICO-48 (OTA) afgerond. Geen actieve openstaande PICO-taken.
+PICO-48 (OTA) afgerond. Eén openstaande PICO-taak: **PICO-49** (Pushover per trigger
+schakelbaar, aangemaakt 2026-07-28).
 
 **Zelfherstel toegevoegd (2026-07-27, commits `ac40ad3`, `8a621a8`, `9117dab`):**
 
@@ -185,10 +186,30 @@ reactiemeting).
 - [ ] PICO-46: Adafruit TTL Camera (arriveert 2026-06-25)
 - [x] PICO-47: Data retentie via pg_cron (365 dagen)
 - [x] PICO-48: OTA software update via WiFi (GitHub raw URLs, manifest.json)
+- [ ] PICO-49: Pushover per trigger schakelbaar (zie "Openstaande verbeteringen")
 
 ---
 
 ## Openstaande verbeteringen (later oppakken)
+
+- **PICO-49: Pushover per trigger schakelbaar maken (gevraagd 2026-07-28).** Nu is
+  `settings["pushover_enabled"]` één globale vlag: hij schakelt de bewegingsmelding, de
+  temperatuurdrempel én het `notify`-commando tegelijk. Dat botst met het gebruik vanuit
+  ElectriciteitsHuishouding, waar een dagelijkse `pg_cron`-job een `notify`-rij in `commands`
+  schrijft als de database richting 300/400 MB groeit. Gewenst: **database-alarmen komen altijd
+  door, lokale triggers apart onderdrukbaar.**
+
+  Aanleiding: op 2026-07-28 is het `notify`-pad voor het eerst end-to-end getest (commando 203 →
+  `pushover_sent` om 14:36:51Z, werkt). Maar het aanzetten van de vlag leverde binnen een minuut
+  ook een "Beweging gedetecteerd"-push op, en die zijn niet gewenst. De vlag staat daarom weer op
+  `false` — waarmee het budgetalarm van dat project stil staat tot dit opgelost is.
+
+  Schets: de `notify`-tak in `experiments/06_nexus/main.py:199-203` loskoppelen van
+  `pushover_enabled` en die vlag alleen nog op de lokale triggers laten gelden; eventueel een
+  tweede setting (`pushover_lokale_triggers`) zodat beide kanten los schakelbaar zijn en de
+  Settings-pagina twee toggles krijgt. Let op: settings worden in RAM gecachet en alleen op een
+  `set_setting`-commando herladen (`main.py:204-206`), dus een DB-patch alleen is niet genoeg.
+  Vraagt `mpremote` of OTA, en elke deploy onderbreekt de loop.
 
 - **Automatische CSV-sync:** `mpremote mount` koppelt een lokale map als
   filesystem aan de Pico zodat data direct op de laptop schrijft. Vereist
