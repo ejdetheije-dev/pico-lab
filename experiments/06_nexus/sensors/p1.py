@@ -5,11 +5,17 @@ hele loop, en kan er dus veel vaker gesampeld worden dan er geschreven wordt.
 
 De meter geeft CUMULATIEVE standen. Dat is het hele punt: na een gat zijn de totalen over
 dat gat nog exact bekend en is alleen de resolutie erbinnen weg.
+
+Waarom een ruwe socket en niet urequests: op /api/v1/data antwoordt de meter urequests met
+HTTP 408 (gemeten 2026-08-01), terwijl /api en de gateway wel 200 geven en een laptop het
+endpoint honderden keren zonder klacht bevraagt. Een request dat in EEN write de deur uit
+gaat werkt wel. Verder is urequests hier overkill: geen TLS, geen redirects, geen chunked
+encoding - de meter stuurt een nette Content-Length.
 """
 
 import config
 import ujson
-import urequests
+import usocket
 import watchdog
 
 # Geen `from config import P1_HOST`: OTA werkt config.py bewust nooit bij, dus een nieuwe
@@ -18,31 +24,35 @@ import watchdog
 # USB bij kunt. Met een default hier landt de update gewoon en kan config.py later bij.
 P1_HOST = getattr(config, "P1_HOST", "192.168.178.190")
 
-# Een LAN-call zonder TLS hoort in tientallen milliseconden klaar te zijn. Toch dezelfde
-# ruime grens als supabase.py: op 5 s gaf elke lezing ETIMEDOUT (gemeten 2026-08-01), en
-# een te krappe timeout is niet te onderscheiden van een onbereikbare meter. Blijkt 15 s
-# ook te weinig, dan is het geen traagheid maar routering.
-TIMEOUT = 15
+# Gemeten vanaf een laptop: 100-460 ms per call. Vijf seconden is ruim, en langer wachten
+# heeft geen zin - dan is de meter weg.
+TIMEOUT = 5
 
 
-def diagnose(doelen):
-    """Probeert een lijst URL's en geeft per URL 'ok <status>' of de foutmelding terug.
+def _haal(pad):
+    """Doet een HTTP/1.0 GET met het hele request in een write. Geeft de body als bytes."""
+    adres = usocket.getaddrinfo(P1_HOST, 80)[0][-1]
+    s = usocket.socket()
+    s.settimeout(TIMEOUT)
+    try:
+        s.connect(adres)
+        s.write(b"GET " + pad + b" HTTP/1.0\r\nHost: " + P1_HOST.encode() + b"\r\n\r\n")
+        antwoord = b""
+        while True:
+            brok = s.read(512)
+            if not brok:
+                break
+            antwoord += brok
+    finally:
+        s.close()
 
-    Tijdelijk, voor een concrete vraag: de Pico krijgt ETIMEDOUT op de P1 terwijl hij
-    Supabase over internet wel bereikt. Als de gateway wel lukt en de P1 niet, ligt het
-    aan verkeer tussen twee wifi-clients; lukt de gateway ook niet, dan aan het LAN-pad.
-    Weghalen zodra dat beantwoord is.
-    """
-    uitslag = {}
-    for url in doelen:
-        watchdog.feed()
-        try:
-            r = urequests.get(url, timeout=TIMEOUT)
-            uitslag[url] = "ok " + str(r.status_code)
-            r.close()
-        except Exception as e:
-            uitslag[url] = str(e) or repr(e)
-    return uitslag
+    scheiding = antwoord.find(b"\r\n\r\n")
+    if scheiding < 0:
+        raise ValueError("geen headereinde in antwoord")
+    kop = antwoord[:scheiding]
+    if b" 200 " not in kop.split(b"\r\n")[0]:
+        raise ValueError(kop.split(b"\r\n")[0].decode())
+    return antwoord[scheiding + 4:]
 
 
 def lees():
@@ -56,10 +66,7 @@ def lees():
     """
     watchdog.feed()
     try:
-        r = urequests.get("http://" + P1_HOST + "/api/v1/data", timeout=TIMEOUT)
-        inhoud = r.content  # eerst lezen, dan sluiten - anders lekt de socket bij een JSON-fout
-        r.close()
-        d = ujson.loads(inhoud)
+        d = ujson.loads(_haal(b"/api/v1/data"))
     except Exception as e:
         print("p1 fout:", e)
         return None, str(e) or repr(e)
