@@ -288,7 +288,9 @@ wdt_actief = watchdog.wapen()
 supabase.insert("events", {"type": "boot", "payload": {
     "reset_cause": machine.reset_cause(),
     "wdt": wdt_actief,
-    "ip": wlan.ifconfig()[0],
+    # Volledige ifconfig, niet alleen het IP: bij een onbereikbare LAN-buur moet je
+    # netmask en gateway kunnen zien om routering uit te sluiten.
+    "net": wlan.ifconfig(),
     "p1_host": P1_HOST,
 }})
 

@@ -18,9 +18,11 @@ import watchdog
 # USB bij kunt. Met een default hier landt de update gewoon en kan config.py later bij.
 P1_HOST = getattr(config, "P1_HOST", "192.168.178.190")
 
-# Een LAN-call zonder TLS hoort in tientallen milliseconden klaar te zijn. Duurt het
-# seconden, dan is de meter weg of het wifi slecht; dan is opgeven beter dan wachten.
-TIMEOUT = 5
+# Een LAN-call zonder TLS hoort in tientallen milliseconden klaar te zijn. Toch dezelfde
+# ruime grens als supabase.py: op 5 s gaf elke lezing ETIMEDOUT (gemeten 2026-08-01), en
+# een te krappe timeout is niet te onderscheiden van een onbereikbare meter. Blijkt 15 s
+# ook te weinig, dan is het geen traagheid maar routering.
+TIMEOUT = 15
 
 
 def lees():
