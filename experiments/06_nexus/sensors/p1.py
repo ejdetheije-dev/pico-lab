@@ -31,37 +31,64 @@ TIMEOUT = 5
 
 
 def _haal(pad):
-    """Doet een HTTP/1.0 GET met het hele request in een write. Geeft de body als bytes.
+    """Doet een HTTP GET en geeft de body als bytes.
 
-    Een mislukking draagt het aantal al ontvangen bytes en de verstreken tijd mee: bij deze
-    meter faalt alleen het grote endpoint, en dan is het verschil tussen "antwoord begint
-    nooit" en "antwoord stokt halverwege" precies de informatie die je nodig hebt.
+    Leest exact Content-Length bytes in plaats van tot de verbinding sluit. Dat is hier geen
+    detail maar de kern: de meter antwoordt met HTTP/1.1 en houdt de verbinding open, dus
+    "lezen tot EOF" blijft hangen op de laatste brok. Gemeten 2026-08-01: precies 1024 bytes
+    binnen (twee reads van 512) en dan ETIMEDOUT, terwijl het antwoord ~1240 bytes is. Het
+    kleine /api-endpoint viel binnen een enkele read en werkte daardoor wel - vandaar dat het
+    op een netwerkprobleem leek. `Connection: close` staat erbij zodat de meter zelf afsluit.
     """
     adres = usocket.getaddrinfo(P1_HOST, 80)[0][-1]
     s = usocket.socket()
     s.settimeout(TIMEOUT)
     begin = time.ticks_ms()
-    antwoord = b""
+    ontvangen = b""
+    body = b""
+    lengte = None
     try:
         s.connect(adres)
-        s.write(b"GET " + pad + b" HTTP/1.0\r\nHost: " + P1_HOST.encode() + b"\r\n\r\n")
-        while True:
-            brok = s.read(512)
+        s.write(
+            b"GET " + pad + b" HTTP/1.1\r\nHost: " + P1_HOST.encode()
+            + b"\r\nConnection: close\r\n\r\n"
+        )
+        # Eerst de headers compleet krijgen.
+        while b"\r\n\r\n" not in ontvangen:
+            brok = s.recv(512)
             if not brok:
-                break
-            antwoord += brok
+                raise ValueError("verbinding dicht voor het einde van de headers")
+            ontvangen += brok
+
+        kop, _, body = ontvangen.partition(b"\r\n\r\n")
+        statusregel = kop.split(b"\r\n")[0]
+        if b" 200 " not in statusregel:
+            raise ValueError(statusregel.decode())
+
+        lengte = _kop_waarde(kop, b"content-length")
+        if lengte is None:
+            raise ValueError("geen Content-Length")
+        while len(body) < lengte:
+            brok = s.recv(512)
+            if not brok:
+                raise ValueError("body afgebroken op %d van %d bytes" % (len(body), lengte))
+            body += brok
     except Exception as e:
-        raise ValueError("%s na %d bytes in %d ms" % (e, len(antwoord), time.ticks_diff(time.ticks_ms(), begin)))
+        gelezen = len(ontvangen) if not body else len(kop) + 4 + len(body)
+        raise ValueError("%s na %d bytes in %d ms" % (e, gelezen, time.ticks_diff(time.ticks_ms(), begin)))
     finally:
         s.close()
 
-    scheiding = antwoord.find(b"\r\n\r\n")
-    if scheiding < 0:
-        raise ValueError("geen headereinde in antwoord")
-    kop = antwoord[:scheiding]
-    if b" 200 " not in kop.split(b"\r\n")[0]:
-        raise ValueError(kop.split(b"\r\n")[0].decode())
-    return antwoord[scheiding + 4:]
+    return body[:lengte]
+
+
+def _kop_waarde(kop, naam):
+    """Waarde van een headerregel als int, of None. Hoofdletterongevoelig."""
+    for regel in kop.split(b"\r\n")[1:]:
+        veld, _, waarde = regel.partition(b":")
+        if veld.strip().lower() == naam:
+            return int(waarde.strip())
+    return None
 
 
 def proef():
