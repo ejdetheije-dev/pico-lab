@@ -7,10 +7,16 @@ De meter geeft CUMULATIEVE standen. Dat is het hele punt: na een gat zijn de tot
 dat gat nog exact bekend en is alleen de resolutie erbinnen weg.
 """
 
+import config
 import ujson
 import urequests
 import watchdog
-from config import P1_HOST
+
+# Geen `from config import P1_HOST`: OTA werkt config.py bewust nooit bij, dus een nieuwe
+# sleutel bestaat niet op een bord dat via OTA is bijgewerkt. Dat zou de import laten falen,
+# main.py niet laten starten en de watchdog nooit laten wapenen - een dood bord tot je er met
+# USB bij kunt. Met een default hier landt de update gewoon en kan config.py later bij.
+P1_HOST = getattr(config, "P1_HOST", "192.168.178.190")
 
 # Een LAN-call zonder TLS hoort in tientallen milliseconden klaar te zijn. Duurt het
 # seconden, dan is de meter weg of het wifi slecht; dan is opgeven beter dan wachten.

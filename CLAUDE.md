@@ -775,6 +775,14 @@ ongevangen exception schrijft de traceback naar `events.type='crash'`. Zonder di
 na een incident niet vast te stellen wat er gebeurde — dat is precies waarom de
 oorspronkelijke oorzaak van maanden crashes nog steeds onbekend is.
 
+**OTA kan geen nieuwe config-sleutel leveren.** `config.py` staat in `NIET_UPDATEN` en wordt
+door OTA nooit overschreven — terecht, want daar staan de credentials in. Gevolg: code die
+`from config import NIEUWE_SLEUTEL` doet, faalt op elk bord dat via OTA is bijgewerkt. En
+faalt die import op module-niveau, dan start `main.py` niet, wordt de watchdog nooit gewapend
+en is het bord dood tot je er met USB bij kunt. Gebruik dus
+`getattr(config, "NIEUWE_SLEUTEL", <default>)` en zet de echte waarde later via USB in
+`config.py`. Betrapt vlak vóór de OTA van `sensors/p1.py` (2026-08-01).
+
 **OTA-consequentie: `main.py` staat als LAATSTE in `ota/manifest.json`.** De manifest wordt in
 volgorde afgelopen, dus elke module waar `main.py` van afhangt moet vóór `main.py` landen —
 anders laat een halverwege afgebroken OTA een `main.py` achter die een ontbrekende module
