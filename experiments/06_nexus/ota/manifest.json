@@ -1,15 +1,16 @@
 [
   "watchdog.py",
-  "main.py",
   "supabase.py",
   "ota.py",
   "sensors/dht11.py",
   "sensors/hcsr04.py",
   "sensors/ldr.py",
+  "sensors/p1.py",
   "sensors/sound.py",
   "sensors/bmp180.py",
   "output/lcd.py",
   "output/buzzer.py",
   "output/relay.py",
-  "output/pushover.py"
+  "output/pushover.py",
+  "main.py"
 ]

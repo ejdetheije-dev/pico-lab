@@ -775,10 +775,12 @@ ongevangen exception schrijft de traceback naar `events.type='crash'`. Zonder di
 na een incident niet vast te stellen wat er gebeurde — dat is precies waarom de
 oorspronkelijke oorzaak van maanden crashes nog steeds onbekend is.
 
-**OTA-consequentie.** `watchdog.py` staat als **eerste** in `ota/manifest.json`. De
-manifest wordt in volgorde afgelopen, dus een module waar `main.py` van afhangt moet vóór
-`main.py` landen — anders laat een halverwege afgebroken OTA een `main.py` achter die een
-ontbrekende module importeert, en dat is een baksteen.
+**OTA-consequentie: `main.py` staat als LAATSTE in `ota/manifest.json`.** De manifest wordt in
+volgorde afgelopen, dus elke module waar `main.py` van afhangt moet vóór `main.py` landen —
+anders laat een halverwege afgebroken OTA een `main.py` achter die een ontbrekende module
+importeert, en dat is een baksteen. Aanvankelijk stond alleen `watchdog.py` vooraan en `main.py`
+op plek twee; bij het toevoegen van `sensors/p1.py` (2026-08-01) bleek dat te smal — de regel is
+nu "alles eerst, `main.py` laatst". Voeg een nieuwe module dus **boven** `main.py` toe.
 
 ## Codeerstijl
 

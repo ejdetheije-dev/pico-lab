@@ -59,6 +59,19 @@ def insert(table, data):
         print("insert fout:", table, e)
 
 
+def rpc(functie, data):
+    """Roept een Postgres-functie aan. Geeft de body terug, of None bij een fout.
+
+    Gebruikt voor energy_ingest: dat is het contract met de database, zodat een
+    schemawijziging geen nieuwe firmware vergt.
+    """
+    try:
+        return _vraag("POST", SUPABASE_URL + "/rest/v1/rpc/" + functie, ujson.dumps(data))
+    except Exception as e:
+        print("rpc fout:", functie, e)
+        return None
+
+
 def get_pending_commands():
     """Haal niet-uitgevoerde commands op (executed_at is null). Lege lijst bij fout."""
     try:

@@ -9,6 +9,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
+from sensors.p1 import lees as lees_p1
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -18,6 +19,13 @@ from output.pushover import stuur as pushover
 BEWEGING_DELTA = 15  # cm dichter dan rustafstand = beweging
 AFWEZIG_NA = 30
 GELUID_AFWEZIG_NA = 5
+
+# De P1 lezen is goedkoop (LAN, geen TLS), wegschrijven naar Supabase is duur. Dus vaak
+# sampelen in RAM en een keer per logcyclus in bulk flushen.
+P1_SAMPLE_MS = 15_000
+# Ruim een uur buffer. Loopt hij vol doordat Supabase langer weg is, dan vallen de oudste
+# samples af: de meterstanden zijn cumulatief, dus de recentste zijn het meest waard.
+P1_BUFFER_MAX = 240
 
 
 def laad_settings():
@@ -105,6 +113,8 @@ temp_alert_actief = False
 geluid_actief = False
 laatste_geluid = time.ticks_ms()
 lcd_scherm = 0
+laatste_p1 = time.ticks_ms()
+p1_buffer = []
 
 # Reset website-toestand bij herstart
 supabase.insert("events", {"type": "motion_absent"})
@@ -149,6 +159,45 @@ def verwerk_geluid():
         laatste_event = "Geen geluid"
         print("Event: sound_absent")
         supabase.insert("events", {"type": "sound_absent"})
+
+
+def verwerk_p1():
+    """Sampelt de slimme meter en bewaart hem in RAM. Schrijft niets weg."""
+    global laatste_p1
+    if time.ticks_diff(time.ticks_ms(), laatste_p1) < P1_SAMPLE_MS:
+        return
+    laatste_p1 = time.ticks_ms()
+    meting = lees_p1()
+    if meting is None:
+        return
+    if len(p1_buffer) >= P1_BUFFER_MAX:
+        p1_buffer.pop(0)
+    p1_buffer.append((time.ticks_ms(), meting))
+
+
+def flush_p1():
+    """Schrijft de gebufferde samples in een call weg via energy_ingest.
+
+    De Pico heeft geen kloksynchronisatie, dus elk sample draagt zijn ouderdom in ms en
+    de database rekent dat om naar een tijdstempel. Bij een mislukte call blijft de buffer
+    staan - anders was de meting weg terwijl de volgende cyclus hem alsnog had kunnen
+    plaatsen.
+    """
+    if not p1_buffer:
+        return
+    nu = time.ticks_ms()
+    samples = []
+    for gemeten_op, meting in p1_buffer:
+        sample = {"age_ms": time.ticks_diff(nu, gemeten_op)}
+        sample.update(meting)
+        samples.append(sample)
+
+    # return=minimal geeft een lege body bij succes, dus toetsen op None en niet op waarheid.
+    if supabase.rpc("energy_ingest", {"samples": samples}) is not None:
+        print("P1:", len(samples), "samples weggeschreven")
+        del p1_buffer[:]  # niet .clear(): del werkt op elke MicroPython-build
+    else:
+        print("P1: flush mislukt,", len(samples), "samples blijven in de buffer")
 
 
 def verwerk_commands():
@@ -238,6 +287,7 @@ while True:
 
         verwerk_beweging()
         verwerk_geluid()
+        verwerk_p1()
 
         # Sensor logging elke POLL_INTERVAL seconden
         if time.ticks_diff(nu, laatste_sensor_log) >= poll_interval * 1000:
@@ -264,6 +314,8 @@ while True:
             verwerk_commands()
             verwerk_beweging()
             verwerk_geluid()
+            verwerk_p1()  # nog even sampelen: de calls hierboven blokkeerden seconden
+            flush_p1()
             laatste_sensor_log = time.ticks_ms()
             laatste_lcd_update = 0  # forceer direct LCD refresh
 
