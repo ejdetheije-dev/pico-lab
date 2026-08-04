@@ -26,6 +26,14 @@ combineren, ten slotte sensor + actuator als regelkring.
 > zijn op 2026-08-04 echt gebruikt, niet alleen geschreven. **Valt de P1 stil, stuur dan eerst
 > een `reset`** - een herstart kan het bord de meter laten kwijtraken terwijl internet gewoon
 > werkt, en nog een herstart lost dat op. Staat uitgewerkt in `CLAUDE.md`.
+>
+> **Zelfherstel bij een onbereikbare P1 (OTA-versie `20260804003`, nog niet uitgerold).** Het
+> bord doet die `reset` nu zelf: is de meter 15 minuten weg terwijl Supabase wél bereikbaar is,
+> dan herstart het. Dat onderscheid is het hele ontwerp - ligt het netwerk eruit, dan verandert
+> een herstart niets en gooit hij wel de gebufferde samples weg. Hielp het niet, dan hoogstens
+> nog eens per uur; die rem overleeft de herstart via een vlagbestand op de flash, want
+> `time.ticks_ms()` begint na een reset weer bij nul. **De gebruiker wil hier na 2026-09-01
+> opnieuw naar gevraagd worden** - zodra het bord weer bereikbaar is, vervalt de aanleiding.
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|

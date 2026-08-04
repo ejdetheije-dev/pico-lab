@@ -52,11 +52,18 @@ def _vraag(methode, url, data=None):
 
 
 def insert(table, data):
-    """Voeg een rij (dict) of meerdere rijen (lijst van dicts) in aan de opgegeven tabel."""
+    """Voeg een rij (dict) of meerdere rijen (lijst van dicts) in aan de opgegeven tabel.
+
+    Geeft True bij succes. Dat is het enige signaal dat Supabase bereikbaar is zonder een
+    extra call te doen, en main.py heeft het nodig om "de meter is weg" te onderscheiden van
+    "het netwerk is weg" - alleen in het eerste geval helpt een herstart.
+    """
     try:
         _vraag("POST", SUPABASE_URL + "/rest/v1/" + table, ujson.dumps(data))
+        return True
     except Exception as e:
         print("insert fout:", table, e)
+        return False
 
 
 def rpc(functie, data):

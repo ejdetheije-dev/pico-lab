@@ -1,6 +1,7 @@
 import io
 import machine
 import network
+import os
 import sys
 import time
 import watchdog
@@ -28,6 +29,21 @@ P1_SAMPLE_MS = 15_000
 P1_BUFFER_MAX = 240
 # Rem op de foutlogging: een onbereikbare meter mag de events-tabel niet volschrijven.
 P1_FOUT_STIL_MS = 300_000
+
+# Zelfherstel. Het enige waargenomen faalgeval is dat het bord na een herstart de meter niet
+# meer bereikt terwijl internet gewoon doorloopt (2026-08-04); een reset loste dat in dertig
+# seconden op, maar alleen doordat iemand het zag. Dit doet dat vanzelf.
+P1_ZELFHERSTEL_MS = 900_000
+# Hielp de vorige herstart niet, dan staat de meter waarschijnlijk echt uit. Dan hoogstens een
+# keer per uur opnieuw, anders herstart het bord elk kwartier en vult het de events-tabel met
+# schijnstoringen die niets oplossen.
+P1_ZELFHERSTEL_HERHAAL_MS = 3_600_000
+# Supabase moet recent gelukt zijn. Is het netwerk weg, dan lost een herstart niets op en gooit
+# hij wel de nog niet weggeschreven samples uit de buffer. Ruim boven een logcyclus van ~78 s.
+SUPABASE_VERS_MS = 300_000
+# Overleeft een herstart, want de flash wel en time.ticks_ms() niet: zo weet de volgende boot
+# dat resetten al geprobeerd is. OTA raakt dit bestand niet aan, het staat niet in het manifest.
+HERSTEL_VLAG = "p1_herstel.vlag"
 
 
 def laad_settings():
@@ -138,7 +154,22 @@ laatste_geluid = time.ticks_ms()
 lcd_scherm = 0
 laatste_p1 = time.ticks_ms()
 laatste_p1_fout = time.ticks_ms() - P1_FOUT_STIL_MS  # eerste fout mag meteen gelogd worden
+laatste_p1_ok = time.ticks_ms()
+laatste_supabase_ok = time.ticks_ms()
 p1_buffer = []
+
+
+def _vlag_bestaat():
+    try:
+        os.stat(HERSTEL_VLAG)
+        return True
+    except OSError:
+        return False
+
+
+# Stond de vlag er nog, dan was deze boot zelf een zelfherstel en heeft het dus niet geholpen:
+# wacht een uur voor de volgende poging in plaats van een kwartier.
+zelfherstel_drempel_ms = P1_ZELFHERSTEL_HERHAAL_MS if _vlag_bestaat() else P1_ZELFHERSTEL_MS
 
 # Reset website-toestand bij herstart
 supabase.insert("events", {"type": "motion_absent"})
@@ -191,7 +222,7 @@ def verwerk_p1():
     Een mislukte lezing wordt wel gelogd, maar hooguit eens per P1_FOUT_STIL_MS: zonder die
     rem zou een onbereikbare meter de events-tabel volschrijven met dezelfde regel.
     """
-    global laatste_p1, laatste_p1_fout
+    global laatste_p1, laatste_p1_fout, laatste_p1_ok
     if time.ticks_diff(time.ticks_ms(), laatste_p1) < P1_SAMPLE_MS:
         return
     laatste_p1 = time.ticks_ms()
@@ -200,10 +231,62 @@ def verwerk_p1():
         if time.ticks_diff(time.ticks_ms(), laatste_p1_fout) > P1_FOUT_STIL_MS:
             laatste_p1_fout = time.ticks_ms()
             supabase.insert("events", {"type": "p1_fout", "payload": {"host": p1_host(), "fout": fout[:200]}})
+        probeer_zelfherstel()
         return
+    laatste_p1_ok = time.ticks_ms()
+    if zelfherstel_drempel_ms != P1_ZELFHERSTEL_MS:
+        meld_herstel_gelukt()
     if len(p1_buffer) >= P1_BUFFER_MAX:
         p1_buffer.pop(0)
     p1_buffer.append((time.ticks_ms(), meting))
+
+
+def meld_herstel_gelukt():
+    """De meter antwoordt weer na een zelfherstel: vlag weg, drempel terug naar een kwartier.
+
+    Het event is er niet voor de sier. Zonder telling is later niet te beantwoorden hoe vaak
+    dit mechanisme echt iets heeft opgelost, en dat bepaalt of het mag blijven.
+    """
+    global zelfherstel_drempel_ms
+    zelfherstel_drempel_ms = P1_ZELFHERSTEL_MS
+    try:
+        os.remove(HERSTEL_VLAG)
+    except OSError:
+        pass
+    print("P1 antwoordt weer na zelfherstel")
+    supabase.insert("events", {"type": "p1_zelfherstel_gelukt", "payload": {"host": p1_host()}})
+
+
+def probeer_zelfherstel():
+    """Herstart het bord als de meter lang weg is terwijl Supabase wel bereikbaar is.
+
+    Dat onderscheid is het hele punt. Ligt het netwerk eruit, dan verandert een herstart niets
+    en gooit hij wel de gebufferde samples weg die anders alsnog waren weggeschreven. Is alleen
+    de meter weg, dan is een herstart precies wat op 2026-08-04 werkte - de oorzaak bleek de
+    wifi-associatie na een reboot te zijn, niet de meter.
+
+    Snellere herhaling dan een kwartier kan niet: laatste_p1_ok begint bij boot op nu. Dat is
+    meteen de vangrail tegen een herstartlus, want elke boot houdt ruim tijd over om commands
+    en een OTA op te halen voordat hij opnieuw zou resetten.
+    """
+    nu = time.ticks_ms()
+    if time.ticks_diff(nu, laatste_p1_ok) < zelfherstel_drempel_ms:
+        return
+    if time.ticks_diff(nu, laatste_supabase_ok) > SUPABASE_VERS_MS:
+        print("P1 weg, maar Supabase ook - niet resetten")
+        return
+
+    weg_s = time.ticks_diff(nu, laatste_p1_ok) // 1000
+    print("P1", weg_s, "s weg terwijl Supabase leeft - zelfherstel")
+    try:
+        open(HERSTEL_VLAG, "w").close()
+    except OSError:
+        pass
+    supabase.insert("events", {"type": "p1_zelfherstel", "payload": {"host": p1_host(), "weg_s": weg_s}})
+    flush_p1()  # de buffer kan nog oude samples bevatten; een reset gooit die anders weg
+    lcd.toon("P1 onbereikbaar", "herstart...")
+    watchdog.sleep(2)
+    machine.reset()
 
 
 def flush_p1():
@@ -354,11 +437,15 @@ while True:
             # is een eigen TLS-handshake (0,6-13 s), dus dit scheelt twee handshakes per
             # cyclus. Het interleaven van commands tussen de inserts is daarmee overbodig:
             # dat bestond alleen omdat drie losse inserts de loop ~30 s blokkeerden.
-            supabase.insert("sensor_readings", [
+            # De uitkomst is meteen het bewijs dat Supabase leeft. probeer_zelfherstel() leunt
+            # daarop: dit is dezelfde rij waarmee /api/bewaking in de cloud "bord weg" van
+            # "meter onbereikbaar" onderscheidt, dus beide kanten gebruiken hetzelfde signaal.
+            if supabase.insert("sensor_readings", [
                 {"sensor": "dht11_temp", "value": laatste_temp},
                 {"sensor": "dht11_humidity", "value": laatste_vocht},
                 {"sensor": "ldr_light", "value": laatste_licht},
-            ])
+            ]):
+                laatste_supabase_ok = time.ticks_ms()
             verwerk_commands()
             verwerk_beweging()
             verwerk_geluid()
