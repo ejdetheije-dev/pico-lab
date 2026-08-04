@@ -802,6 +802,32 @@ importeert, en dat is een baksteen. Aanvankelijk stond alleen `watchdog.py` voor
 op plek twee; bij het toevoegen van `sensors/p1.py` (2026-08-01) bleek dat te smal — de regel is
 nu "alles eerst, `main.py` laatst". Voeg een nieuwe module dus **boven** `main.py` toe.
 
+**Een commando dat het bord reset moet EERST afvinken.** `verwerk_commands()` vinkt normaal
+onderaan de lus af, maar `machine.reset()` komt daar nooit. Blijft het commando openstaan, dan
+pikt het bord het na de herstart opnieuw op: een herstartlus. In de `reset`-tak staat
+`mark_executed()` daarom vóór de reset. Hetzelfde gaat mis bij `ota_update`, maar daar lost het
+zichzelf op omdat de versies na de herstart gelijk zijn en de tak dan alsnog afvinkt - je ziet
+dat terug als een `ota_actueel`-event vlak na elke geslaagde OTA. Bewezen 2026-08-04: het
+`reset`-commando gaf precies één herstart.
+
+**Config die op afstand te wijzigen moet zijn, hoort in `settings` en niet in `config.py`.**
+`config.py` staat in `NIET_UPDATEN`, dus OTA raakt het nooit aan - terecht voor credentials, maar
+fataal voor iets als het IP van een LAN-buur. Er zijn geen DHCP-reserveringen, dus dat adres kan
+verspringen, en dan is het bord alleen met USB te repareren. `p1.zet_host()` leest het daarom uit
+`settings`, met `config.py` als terugval bij een lege waarde. Vuistregel: **staat een waarde in
+`config.py` en is hij geen geheim, vraag je dan af wat er gebeurt als hij verandert terwijl je er
+niet bij kunt.**
+
+**Na een herstart kan het bord een LAN-buur niet meer bereiken terwijl internet gewoon werkt.**
+Gemeten 2026-08-04: `p1_proef` faalde op beide endpoints met `0 bytes in 5000 ms` - de TCP-
+verbinding kwam niet eens tot stand - terwijl Supabase-writes doorliepen en een laptop diezelfde
+meter in 87 ms bediende. Na de vorige herstart, 28 minuten eerder, was er niets aan de hand. Nog
+een reset herstelde het meteen. Het zit dus in de wifi-associatie na een reboot en het is grillig.
+**Diagnose zonder gokken:** richt de P1-lezer via `settings` even op de gateway. Komt daar een
+HTTP-antwoord uit (bij ons `syntax error in JSON`, want de gateway geeft HTML), dan werkt het
+LAN-pad en is het probleem die ene buur. Blijft het `0 bytes`, dan bereikt het bord niets op het
+LAN. Dat onderscheid kost één settings-wijziging en sluit de helft van de hypothesen uit.
+
 ## Codeerstijl
 
 - MicroPython, geen zware externe libraries. Alleen wat op de Pico past.

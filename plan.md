@@ -19,6 +19,13 @@ combineren, ten slotte sensor + actuator als regelkring.
 > Vlak vóór het wegzetten uitgerold: `verbind_wifi_bij_boot()` (`f742016`, OTA-versie
 > `20260804001`), zodat een mislukte wifi bij het opstarten het bord niet meer dood achterlaat.
 > Zie "Betrouwbaarheid van de Nexus-loop" in `CLAUDE.md`.
+>
+> **Twee afstandsbedieningen (`56a8d68`, OTA-versie `20260804002`), allebei een rij in
+> `commands`:** `{"command":"reset"}` herstart het bord, en een `settings`-rij `p1_host` plus
+> `{"command":"set_setting"}` verplaatst het meteradres zonder `config.py` aan te raken. Beide
+> zijn op 2026-08-04 echt gebruikt, niet alleen geschreven. **Valt de P1 stil, stuur dan eerst
+> een `reset`** - een herstart kan het bord de meter laten kwijtraken terwijl internet gewoon
+> werkt, en nog een herstart lost dat op. Staat uitgewerkt in `CLAUDE.md`.
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
