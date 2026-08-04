@@ -23,11 +23,31 @@ import watchdog
 # sleutel bestaat niet op een bord dat via OTA is bijgewerkt. Dat zou de import laten falen,
 # main.py niet laten starten en de watchdog nooit laten wapenen - een dood bord tot je er met
 # USB bij kunt. Met een default hier landt de update gewoon en kan config.py later bij.
-P1_HOST = getattr(config, "P1_HOST", "192.168.178.190")
+_CONFIG_HOST = getattr(config, "P1_HOST", "192.168.178.190")
+P1_HOST = _CONFIG_HOST
 
 # Gemeten vanaf een laptop: 100-460 ms per call. Vijf seconden is ruim, en langer wachten
 # heeft geen zin - dan is de meter weg.
 TIMEOUT = 5
+
+
+def host():
+    """Het adres dat nu gebruikt wordt. Functie en geen constante, want settings kan hem wijzigen."""
+    return P1_HOST
+
+
+def zet_host(waarde):
+    """Zet het meteradres uit settings, of valt terug op config.py bij een lege waarde.
+
+    Dit bestaat omdat er geen DHCP-reserveringen zijn: verspringt het adres van de meter, dan
+    logt het bord vrolijk door naar een adres dat niet meer bestaat. Via config.py is dat niet
+    te herstellen zolang het bord fysiek onbereikbaar is - OTA raakt config.py nooit aan - maar
+    via de settings-tabel wel, met een set_setting-commando.
+    """
+    global P1_HOST
+    schoon = waarde.strip() if waarde else ""
+    P1_HOST = schoon or _CONFIG_HOST
+    return P1_HOST
 
 
 def _haal(pad):

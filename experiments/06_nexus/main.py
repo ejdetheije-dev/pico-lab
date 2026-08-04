@@ -9,7 +9,7 @@ import supabase
 from sensors.dht11 import DHT11
 from sensors.hcsr04 import HCSR04
 from sensors.ldr import LDR
-from sensors.p1 import lees as lees_p1, proef as proef_p1, P1_HOST
+from sensors.p1 import lees as lees_p1, proef as proef_p1, host as p1_host, zet_host as zet_p1_host
 from sensors.sound import Sound, DREMPEL as GELUID_DREMPEL
 from output.lcd import LCD
 from output.buzzer import Buzzer
@@ -38,6 +38,8 @@ def laad_settings():
         "temp_alert_threshold": int(s.get("temp_alert_threshold", 30)),
         "pushover_enabled": s.get("pushover_enabled", "false") == "true",
         "lcd_backlight": s.get("lcd_backlight", "true") == "true",
+        # Leeg laten betekent: gebruik het adres uit config.py. Zie p1.zet_host().
+        "p1_host": s.get("p1_host", ""),
     }
 
 
@@ -89,7 +91,8 @@ verbind_wifi_bij_boot()
 
 settings = laad_settings()
 poll_interval = settings["poll_interval_s"]
-print("Settings geladen: poll_interval_s =", poll_interval)
+zet_p1_host(settings["p1_host"])
+print("Settings geladen: poll_interval_s =", poll_interval, "p1_host =", p1_host())
 
 dht11 = DHT11()
 sonar = HCSR04()
@@ -196,7 +199,7 @@ def verwerk_p1():
     if fout is not None:
         if time.ticks_diff(time.ticks_ms(), laatste_p1_fout) > P1_FOUT_STIL_MS:
             laatste_p1_fout = time.ticks_ms()
-            supabase.insert("events", {"type": "p1_fout", "payload": {"host": P1_HOST, "fout": fout[:200]}})
+            supabase.insert("events", {"type": "p1_fout", "payload": {"host": p1_host(), "fout": fout[:200]}})
         return
     if len(p1_buffer) >= P1_BUFFER_MAX:
         p1_buffer.pop(0)
@@ -278,11 +281,20 @@ def verwerk_commands():
                 bericht = payload.get("bericht", "")
                 if pushover(bericht, payload.get("titel", "Nexus")):
                     supabase.insert("events", {"type": "pushover_sent", "payload": {"bericht": bericht}})
+        elif type_ == "reset":
+            # Eerst afvinken, dan pas resetten: een commando dat nog openstaat wordt na de
+            # herstart opnieuw opgepikt en zet het bord in een herstartlus.
+            lcd.toon("Herstart", "op commando")
+            supabase.mark_executed(cmd["id"])
+            supabase.insert("events", {"type": "reset_commando"})
+            watchdog.sleep(2)
+            machine.reset()
         elif type_ == "set_setting":
             settings = laad_settings()
             poll_interval = settings["poll_interval_s"]
             lcd.set_backlight(settings["lcd_backlight"])
-            print("Settings herladen: poll_interval_s =", poll_interval)
+            zet_p1_host(settings["p1_host"])
+            print("Settings herladen: poll_interval_s =", poll_interval, "p1_host =", p1_host())
         supabase.mark_executed(cmd["id"])
     laatste_command_poll = time.ticks_ms()
 
@@ -309,7 +321,7 @@ supabase.insert("events", {"type": "boot", "payload": {
     # Volledige ifconfig, niet alleen het IP: bij een onbereikbare LAN-buur moet je
     # netmask en gateway kunnen zien om routering uit te sluiten.
     "net": wlan.ifconfig(),
-    "p1_host": P1_HOST,
+    "p1_host": p1_host(),
 }})
 
 # Eenmalig bij boot: beide endpoints meten, met bytes en tijd. Alleen het grote endpoint
