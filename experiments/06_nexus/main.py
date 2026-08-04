@@ -67,7 +67,25 @@ def herverbind_indien_nodig():
             print("Herverbinding mislukt, volgende cyclus opnieuw proberen")
 
 
-verbind_wifi()
+def verbind_wifi_bij_boot():
+    """Blijft proberen tot de wifi er is, reset na vijf ronden.
+
+    Bij boot mag een mislukte verbinding main.py niet afbreken: de watchdog wordt pas
+    onderaan gewapend, dus een exception hier laat het bord stil staan tot iemand er met
+    USB bij kan. Resetten in plaats van opgeven herinitialiseert bovendien de wifi-chip,
+    en blijft zichzelf herhalen zolang het netwerk weg is.
+    """
+    for ronde in range(5):
+        try:
+            verbind_wifi()
+            return
+        except RuntimeError:
+            print("WiFi mislukt, ronde", ronde + 1, "van 5")
+    print("WiFi blijft weg, bord resetten")
+    machine.reset()
+
+
+verbind_wifi_bij_boot()
 
 settings = laad_settings()
 poll_interval = settings["poll_interval_s"]
