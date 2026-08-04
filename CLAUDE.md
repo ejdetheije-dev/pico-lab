@@ -764,6 +764,18 @@ globals alleen *gelezen*; muteren van een global int in een IRQ blijft onbetrouw
 de 20× `sleep(1)` in `verbind_wifi()` en de DHT11-retry. Anders maakt een gezonde
 wifi-herverbinding juist een reset.
 
+**Niets op moduleniveau mag een exception gooien — de watchdog wordt pas ONDERAAN gewapend.**
+`verbind_wifi()` gaf na twintig seconden op met een `RuntimeError`, en die stond kaal op
+moduleniveau. Gevolg: geen wifi bij het opstarten betekende dat `main.py` afbrak vóór
+`watchdog.wapen()`, waarna het bord stil in de REPL bleef staan. Geen watchdog, geen tweede
+poging, geen `boot`-event — van buiten niet te onderscheiden van een dood bord, en alleen met
+USB te herstellen. Dat is dezelfde faalvorm als de config-import hierboven, dus behandel het
+als één regel: **faalt iets in de bootsequentie, reset dan het bord in plaats van op te geven.**
+`verbind_wifi_bij_boot()` (2026-08-04) probeert vijf ronden en roept daarna `machine.reset()`;
+een reset herinitialiseert de wifi-chip en herhaalt zichzelf zolang het netwerk weg is, dus het
+bord komt vanzelf terug. Aanleiding: het bord ging vier weken onbereikbaar in een metalen doos,
+waardoor een dood bord van schoonheidsfout naar storing van vier weken promoveerde.
+
 **`reset_cause` lezen.** Op RP2 is `machine.reset()` zélf via de watchdog geïmplementeerd,
 dus code **3** (`WDT_RESET`) is **niet eenduidig** — een expliciete reset geeft ook 3.
 Leesregel: 3 met een `ota_geslaagd`-event er direct voor is een bedoelde reset; 3 zonder

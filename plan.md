@@ -3,7 +3,22 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-07-27) — experiment 06 Nexus actief, loop herstelt zichzelf
+## Status (2026-08-04) — experiment 06 Nexus actief, bord tot ~2026-09-01 onbereikbaar
+
+> **Het bord zit sinds 2026-08-04 in een metalen doos onder een bed en hangt NIET aan USB.**
+> Geen `mpremote`, geen seriële console, geen COM-poort, tot het er rond 2026-09-01 weer uit
+> komt. Code wijzigen kan alleen via OTA (een `ota_update`-rij in `commands`), en een stukke
+> update is dan pas over weken te herstellen — weeg dat mee vóór je iets uitrolt.
+>
+> Bewegings- en geluidsdetectie zijn daar zinloos en dat is geaccepteerd; wat moet doorlopen
+> is de P1-keten voor het ElectriciteitsHuishouding-dashboard. Gemeten in de doos: 97,5%
+> doorvoer (was 86% op het bureau) en 25 °C, dus de behuizing kost niets. Uitval wordt sinds
+> 2026-08-04 dagelijks vanuit de cloud bewaakt (`/api/bewaking` in het andere project), buiten
+> dit bord om — want een bord dat stilstaat meldt zijn eigen uitval niet.
+>
+> Vlak vóór het wegzetten uitgerold: `verbind_wifi_bij_boot()` (`f742016`, OTA-versie
+> `20260804001`), zodat een mislukte wifi bij het opstarten het bord niet meer dood achterlaat.
+> Zie "Betrouwbaarheid van de Nexus-loop" in `CLAUDE.md`.
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
