@@ -750,6 +750,31 @@ elke call zet door `Connection: close` een nieuwe TLS-handshake op (0,6-7,8 s, b
 Calls van 6-7 s zijn hier dus normaal. **Bouw nooit een watchdog-ontwerp op de aanname
 dat een netwerkcall kort is.**
 
+**De tweede zelfherstelroute: een onbereikbare P1 (sinds 2026-08-04, OTA `20260804003`).** De
+watchdog vangt een hang van de lus; deze vangt het tegenovergestelde geval, waarin de lus juist
+gezond doorloopt maar de meter onbereikbaar is. `probeer_zelfherstel()` in `main.py` reset het
+bord als de P1 15 minuten niets geeft **terwijl Supabase wél bereikbaar is**. Die tweede
+voorwaarde is het ontwerp en geen extra zekerheidje: ligt het netwerk eruit, dan verandert een
+herstart niets en gooit hij wel de gebufferde samples weg. Het signaal is de terugwaarde van
+`supabase.insert()` op de `sensor_readings`-rij — daarom geeft die functie sinds deze wijziging
+`True`/`False` terug in plaats van niets.
+
+Drie dingen om niet stuk te maken als je hieraan komt:
+- **De rem staat op de flash, niet in RAM.** `time.ticks_ms()` begint na een reset weer bij nul,
+  dus een teller kan niet onthouden dát er net een zelfherstel was. Zonder het vlagbestand
+  `p1_herstel.vlag` levert een echt uitgeschakelde meter vier herstarts per uur op in plaats van
+  één. Het bestand staat bewust **niet** in `ota/manifest.json`.
+- **Sneller dan een kwartier kan niet**, want `laatste_p1_ok` begint bij boot op nu. Dat is de
+  vangrail tegen een herstartlus: elke boot houdt ruim tijd over om commands (elke 3 s gepolld)
+  en een OTA op te halen.
+- **Losse timeouts zetten het niet in werking.** Elke geslaagde lezing ververst de teller; alleen
+  aaneengesloten stilte telt. Let daarop bij het lezen van `p1_fout`: die logging is afgeknepen
+  tot één melding per vijf minuten, dus incidentele fouten ogen talrijker dan ze zijn.
+
+Bewezen op 2026-08-04 op zijn eigen aanleiding, binnen een kwartier na installatie: boot 14:33:40
+met `p1_proef` dood op beide endpoints, `p1_zelfherstel` 14:48:52 (`weg_s` 913), boot 14:49:16,
+`p1_proef` `ok 1115 bytes` 14:49:27, `p1_zelfherstel_gelukt` 14:49:28. Gat 17,1 minuten.
+
 **Het ontwerp dat wel werkt.** Een `machine.Timer` voedt de WDT, maar alléén zolang een
 expliciete deadline niet verstreken is; de loop schuift die deadline elke iteratie op met
 `watchdog.leef()` (`MARGE_S = 45`). De duur van een enkele call doet daarmee niet meer mee.
