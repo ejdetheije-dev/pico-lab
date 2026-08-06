@@ -3,7 +3,7 @@
 Vijf experimenten van makkelijk naar complex. Eerst sensor uitlezen, daarna
 combineren, ten slotte sensor + actuator als regelkring.
 
-## Status (2026-08-04) — experiment 06 Nexus actief, bord tot ~2026-09-01 onbereikbaar
+## Status (2026-08-06) — experiment 06 Nexus actief, bord tot ~2026-09-01 onbereikbaar
 
 > **Het bord zit sinds 2026-08-04 in een metalen doos onder een bed en hangt NIET aan USB.**
 > Geen `mpremote`, geen seriële console, geen COM-poort, tot het er rond 2026-09-01 weer uit
@@ -42,6 +42,19 @@ combineren, ten slotte sensor + actuator als regelkring.
 >
 > **De gebruiker wil hier na 2026-09-01 opnieuw naar gevraagd worden** - zodra het bord weer
 > bereikbaar is, vervalt de aanleiding. Tel dan hoe vaak `p1_zelfherstel` is afgegaan.
+>
+> **RLS op de laatste vier tabellen (2026-08-06, `tools/rls.sql` deel 2).** Supabase meldde
+> `commands`, `settings`, `moods` en `mood_users` als CRITICAL `rls_disabled_in_public`: iedereen
+> met de publishable key uit de browserbundle kon ze wissen. RLS staat nu aan met tien policies
+> die exact de verbs toestaan die de code gebruikt. Lezen bleef ongewijzigd (222 / 5 / 11 / 3
+> rijen vóór en ná) en de schrijfkant is end-to-end bewezen met commando 223 (`rls_proef`, een
+> onbekende naam die bij het bord door alle branches heen naar `mark_executed` valt):
+> ingeschreven met de publishable key om 15:28:38Z, door het bord afgevinkt om 15:28:39Z.
+> **Dat 1,04 seconde is meteen het bewijs dat het bord in de doos leeft en reageert.** De
+> UPDATE-policy op `commands` is hier de kritieke: zonder die kan het bord `executed_at` niet
+> zetten, blijft elk commando openstaan en zou de eerste `reset` een herstartlus geven - precies
+> wat je niet wilt met een bord dat je niet kunt aanraken. Wat NIET dicht is: zie
+> "Openstaande verbeteringen".
 
 | Experiment             | Code | Bedraad | Getest | Jira      |
 |------------------------|------|---------|--------|-----------|
@@ -248,6 +261,23 @@ reactiemeting).
   Settings-pagina twee toggles krijgt. Let op: settings worden in RAM gecachet en alleen op een
   `set_setting`-commando herladen (`main.py:204-206`), dus een DB-patch alleen is niet genoeg.
   Vraagt `mpremote` of OTA, en elke deploy onderbreekt de loop.
+
+- **Wie een rij in `commands` mag zetten (open sinds 2026-08-06).** RLS staat nu op alle tabellen,
+  maar de INSERT-policy op `commands` moet `true` blijven omdat nexus-web hem vanuit de browser
+  gebruikt. Gevolg: wie de publishable key uit de browserbundle haalt, kan het bord laten
+  herstarten (`reset`) of het meteradres verzetten (`set_setting`). Wissen en wijzigen is dicht,
+  dit niet - en met een policy is het ook niet dicht te krijgen, want de rol die mag schrijven is
+  dezelfde rol als de bezoeker.
+
+  Twee routes, geen van beide klein: (a) inloggen in nexus-web (Supabase Auth) en de policies op
+  `auth.uid() is not null` zetten - dan valt de Pico's eigen SELECT/UPDATE erbuiten en heeft die
+  een eigen rol nodig; (b) een serverroute ertussen (Vercel-functie met de service-role key, zoals
+  ElectriciteitsHuishouding het doet met `CRON_SECRET`) en de anon INSERT dichtzetten - dan hoeft
+  de Pico niet te veranderen, en dat is met een onbereikbaar bord het zwaarste argument.
+
+  Weeg mee hoe erg dit is: de repo is publiek (vereist voor OTA), dus de key is niet geheim te
+  houden. De schade blijft beperkt tot een herstart of een verkeerd meteradres, en beide zijn
+  vanaf hetzelfde kanaal weer recht te zetten.
 
 - **Automatische CSV-sync:** `mpremote mount` koppelt een lokale map als
   filesystem aan de Pico zodat data direct op de laptop schrijft. Vereist
